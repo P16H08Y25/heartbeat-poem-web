@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>一首用心电图写的诗 · 2.0 完整版</title>
+<meta name="description" content="《一首用心电图写的诗》2.0 · 全章节电影化交互小说 · 67 场景 · 12 立绘 · 10 粒子 · 双周目四结局">
+<link rel="stylesheet" href="assets/fonts/noto-serif-sc-400.css">
+<link rel="stylesheet" href="assets/fonts/noto-serif-sc-700.css">
+<link rel="stylesheet" href="css/v2.css">
+</head>
+<body>
+<div id="stage" data-mode="title">
+  <div id="stageShake">
+    <div id="camWrap">
+      <!-- 镜头变换只作用于背景层；调色、暗角、湿光、雾合并为单个合成层 -->
+      <div id="bgLayer"><img id="bgA" alt=""><img id="bgB" alt=""></div>
+      <div id="gradeLayer"></div>
+      <canvas id="pCanvas"></canvas>
+      <div id="castLayer"></div>
+      <div id="grainCanvas"></div>
+      <div id="sheHands"><div class="sheBody"></div><div class="sheTool"></div><div class="sheWrench">⌁</div></div>
+    </div>
+    <div id="flashLayer"></div>
+    <div class="fx fxLines"></div>
+  </div>
+
+  <!-- 封面：底部持续跳动的心电图 -->
+  <div id="ecgBottom"><canvas id="ecgCanvas"></canvas><span>ECG / MK-ECO-01</span></div>
+
+  <!-- 宽银幕黑边 -->
+  <div id="scope"><i class="top"></i><i class="bottom"></i></div>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div class="hudLeft">
+      <div id="dayLabel">第 0 天</div>
+      <div id="sceneTag"></div>
+    </div>
+    <div class="hudRight">
+      <span id="autoBtn" class="hBtn" role="button" tabindex="0" title="自动播放">自动</span>
+      <span id="skipBtn" class="hBtn" role="button" tabindex="0" title="跳过当前演出">跳过</span>
+      <span id="soundBtn" class="hBtn iconBtn" role="button" tabindex="0" title="声音：开（点击静音）" aria-label="声音：开">
+        <svg class="icoSound icoOn" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 9h4l5-4v14l-5-4H4z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          <path d="M16 9a4.5 4.5 0 0 1 0 6M18.4 6.6a8 8 0 0 1 0 10.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <svg class="icoSound icoOff" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/>
+          <path d="M16 9l5 6M21 9l-5 6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <span id="menuBtn" class="hBtn iconBtn" role="button" tabindex="0" title="菜单（Esc）" aria-label="菜单">
+        <span class="hamburger" aria-hidden="true"><i></i><i></i><i></i></span>
+      </span>
+    </div>
+  </div>
+
+  <!-- 对话框：说话人立绘叠在左侧，从框顶探出 -->
+  <div id="textbox" class="textbox">
+    <div id="tbPortrait"><img id="tbPortraitImg" alt=""><span id="tbPortraitName"></span></div>
+    <div class="tbBody">
+      <div id="speaker"><span id="speakerName"></span><span id="speakerHint"></span></div>
+      <div id="line"></div>
+      <div id="nextMark">⌄</div>
+    </div>
+  </div>
+
+  <!-- 章节卡 -->
+  <div id="chapterScreen">
+    <div class="chFrame">
+      <div id="chNum"></div><div class="chRule"></div>
+      <div id="chTitle"></div><div id="chDay"></div><div id="chSub"></div>
+      <div class="chHint">点击继续</div>
+    </div>
+  </div>
+
+  <!-- CG 特写 -->
+  <div id="cgScreen">
+    <div class="cgFrame">
+      <img id="cgImg" alt="">
+      <img id="cgPortrait" alt="">
+      <div class="cgShade"></div>
+      <div class="cgMeta"><div id="cgCap"></div><div id="cgNote"></div></div>
+      <button id="cgClose" class="ghostBtn">继续</button>
+    </div>
+  </div>
+
+  <!-- 心电诗集 -->
+  <div id="poemFloat"><div id="poemTag"></div><div id="poemLines"></div></div>
+  <!-- 雪花字（0.4 秒不可读） -->
+  <div id="snowLine"></div>
+
+  <!-- 选择 -->
+  <div id="choiceBox">
+    <div id="choicePrompt"></div><div id="choiceSub"></div><div id="choiceList"></div>
+  </div>
+
+  <!-- 第二周目日志层 -->
+  <div id="logScreen">
+    <div class="logFrame">
+      <div class="logTop"><span id="logTitle">《维护日志》</span><span id="logNo"></span></div>
+      <div id="logBody"></div>
+      <div class="logFoot"><button id="logRewind" class="ghostBtn small">↶ 回看那一秒</button><button id="logClose" class="ghostBtn small">继续 ▸</button></div>
+    </div>
+  </div>
+
+  <!-- 作者手记 -->
+  <div id="noteScreen"><div class="noteFrame"><div id="noteBody"></div><button id="noteClose" class="ghostBtn">合上</button></div></div>
+
+  <!-- 结局 -->
+  <div id="endingScreen">
+    <div class="endFrame"><div class="endKicker">ENDING</div><div id="endTitle"></div>
+      <div class="endRule"></div><div id="endPoem"></div>
+      <button id="endClose" class="ghostBtn">继续 ▸</button></div>
+  </div>
+
+  <!-- 小游戏层 -->
+  <div id="miniLayer" class="miniLayer"></div>
+
+  <!-- 主菜单 -->
+  <div id="titleScreen" class="on">
+    <div class="titleShade"></div>
+    <div class="titleHead">
+      <div class="titleKicker">A POEM WRITTEN IN ECG　·　2.0 完整版</div>
+      <h1>一首用心电图写的诗</h1>
+      <div class="titleSub">一个杀手被派去杀一台只会修东西的机器。<br>四十七天后，他为了不让人把它拆开，把自己也拆了。</div>
+      <div class="titleQuote">「他们的心跳就是诗，他们无需落笔。」</div>
+    </div>
+    <div id="titleMenu"></div>
+    <div class="titleFoot">
+      <div id="titleProgress"></div>
+      <div class="titleKeys">点击 / 空格 推进　·　按住 = 互动　·　Esc 菜单</div>
+    </div>
+  </div>
+
+  <!-- 收尾 -->
+  <div id="finishScreen">
+    <div class="finFrame"><div id="finishBody"></div><div id="finishActions"></div></div>
+  </div>
+
+  <!-- 面板：章节 -->
+  <div id="chaptersScreen" class="panel">
+    <div class="panelHead"><b>章 节</b><span>全 22 章 · 所有时间线</span><button id="chaptersClose" class="xBtn">✕</button></div>
+    <div id="chapterList" class="panelBody"></div>
+    <div class="panelFoot"><button id="chaptersBack" class="ghostBtn">返回</button></div>
+  </div>
+
+  <!-- 面板：环境档案 -->
+  <div id="archiveScreen" class="panel">
+    <div class="panelHead"><b>环境档案</b><span>67 场 · 底层交互场景</span><button id="archiveClose" class="xBtn">✕</button></div>
+    <div id="archiveFilters"></div>
+    <div id="archiveGrid" class="panelBody"></div>
+    <div id="archiveDetail">
+      <button id="archiveDetailClose" class="xBtn arcDetailClose" title="关闭预览（Esc）" aria-label="关闭预览">✕</button>
+      <img id="arcDetailImg" alt="">
+      <div class="arcInfo"><div id="arcDetailCode"></div><h3 id="arcDetailName"></h3><div id="arcDetailMeta"></div>
+        <button id="arcPlay" class="ghostBtn">从这里进入电影 ▸</button><button id="archiveBack" class="ghostBtn">返回档案</button></div>
+    </div>
+  </div>
+
+  <!-- 面板：设置 -->
+  <div id="settingsScreen" class="panel small">
+    <div class="panelHead"><b>设 置</b><span>画面 / 声音 / 镜头</span><button id="settingsClose" class="xBtn">✕</button></div>
+    <div id="settingsBody" class="panelBody"></div>
+  </div>
+
+  <!-- 面板：暂停 -->
+  <div id="pauseScreen" class="panel small">
+    <div class="panelHead"><b>暂停</b><span>雨还在下</span><button id="pauseClose" class="xBtn">✕</button></div>
+    <div id="pauseBody" class="panelBody"></div>
+  </div>
+
+  <!-- 面板：结局诗集 -->
+  <div id="poemsScreen" class="panel">
+    <div class="panelHead"><b>结局诗集</b><span>十二联句 · 四份账单</span><button id="poemsClose" class="xBtn">✕</button></div>
+    <div id="poemsBody" class="panelBody"></div>
+  </div>
+
+  <!-- 面板：存档 -->
+  <div id="saveScreen" class="panel">
+    <div class="savePaper"></div>
+    <div class="panelHead"><b>存 档</b><span>每一份存档是一段波形</span><button id="saveClose" class="xBtn">✕</button></div>
+    <div id="saveSlots" class="panelBody"></div>
+  </div>
+
+  <!-- 通用确认框（覆盖进度 / 重置记录） -->
+  <div id="confirmScreen" class="panel small">
+    <div class="panelHead"><b id="confirmTitle">请确认</b><span id="confirmSub"></span><button id="confirmClose" class="xBtn">✕</button></div>
+    <div id="confirmBody" class="panelBody"></div>
+    <div class="panelFoot"><button id="confirmNo" class="ghostBtn">取消</button><button id="confirmYes" class="ghostBtn">确定</button></div>
+  </div>
+
+  <div id="toast"></div>
+  <div id="quickHint"></div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/save.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/fx.js"></script>
+<script src="js/story.js"></script>
+<script src="js/minigames.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/engine.js"></script>
+<script>window.addEventListener('DOMContentLoaded',function(){window.VGame.init();});</script>
+</body>
+</html>

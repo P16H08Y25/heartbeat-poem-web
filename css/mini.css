@@ -1,0 +1,780 @@
+/* ============================================================
+   mini.css — 交互小游戏视觉
+   ============================================================ */
+.miniLayer{position:absolute;inset:0;z-index:25;opacity:0;pointer-events:none;transition:opacity .38s}
+.miniLayer.on{opacity:1;pointer-events:auto}
+/* 遮罩要压住身后的对话框文字：旧值 .88 会让上一句台词透出来，像脏字。
+   留一点中心透光保住景深，边缘直接压到近乎全黑。 */
+.miniScrim{position:absolute;inset:0;background:radial-gradient(circle at 50% 46%,rgba(3,5,8,.955),rgba(2,3,5,.995))}
+.miniBox{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:min(880px,90vw);max-height:86vh;overflow:auto;padding:36px 40px;text-align:center;
+  background:linear-gradient(160deg,rgba(14,17,20,.95),rgba(8,10,13,.98));
+  border:1px solid rgba(220,210,190,.18);box-shadow:0 40px 130px rgba(0,0,0,.85);
+  animation:miniIn .5s cubic-bezier(.2,.7,.2,1) both;scrollbar-width:thin}
+@keyframes miniIn{from{opacity:0;transform:translate(-50%,-46%) scale(.98)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+.miniBox.retreat{transform:translate(-50%,-50%) translateX(-30px) scale(.97);transition:transform .7s}
+.miniSkip{position:absolute;right:3%;top:4%;z-index:30;font:10px var(--mono);letter-spacing:.2em;
+  color:rgba(220,215,205,.4);padding:8px 12px;border:1px solid rgba(220,210,190,.14)}
+.miniSkip:hover{color:var(--accent);border-color:var(--accent)}
+.miniSkip span{opacity:.5;margin-left:6px}
+.miniTitle{font-size:17px;letter-spacing:.22em;color:var(--accent);margin:22px 0 10px}
+.miniSub{font-size:12px;letter-spacing:.08em;color:rgba(215,210,200,.5);line-height:1.8;margin-bottom:20px;font-family:var(--ui)}
+/* 照片卡片下沿会压住说明文字，单独给它让出空位 */
+.mPhoto .miniSub{margin-top:20px}
+.miniBox .ghostBtn{margin:6px 5px}
+
+/* 序章按住光点 */
+.mPrologue{background:radial-gradient(circle,#05070a,#000);border-color:rgba(255,255,255,.1)}
+.proWrap{position:relative;height:min(560px,68vh);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px}
+.proDot{width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,.28);cursor:pointer;
+  box-shadow:0 0 0 0 rgba(255,255,255,.1);transition:all .3s;touch-action:none}
+.proDot.lit{background:#fff;box-shadow:0 0 30px 10px rgba(255,255,255,.55),0 0 90px 34px rgba(255,255,255,.12)}
+.proLines{position:absolute;left:8%;right:8%;top:12%;bottom:14%;display:flex;flex-direction:column;justify-content:center;
+  gap:16px;pointer-events:none}
+.proLine{font-size:16px;line-height:1.9;letter-spacing:.1em;color:rgba(238,234,225,.92);opacity:0;
+  transform:translateY(14px);transition:opacity .8s,transform .8s;text-shadow:0 3px 20px #000}
+.proLine.on{opacity:1;transform:none}
+.proLine.scatter{opacity:0!important;transform:translateY(38px);filter:blur(5px);transition:all .7s}
+.proFlat{font:12px var(--mono);letter-spacing:.2em;color:rgba(180,220,190,.75);opacity:0;transition:opacity 1s;margin-top:10px}
+.proFlat.on{opacity:1}
+.proFoot{position:absolute;bottom:6%;font:10px var(--mono);letter-spacing:.18em;color:rgba(220,215,205,.35)}
+
+/* 飞行器 / 人群 */
+.mShip{border-color:rgba(180,120,220,.2)}
+.shipSky{position:relative;height:min(400px,50vh);overflow:hidden;
+  background:linear-gradient(180deg,#0a0c18,#161222 60%,#221326)}
+.shipHint{position:absolute;top:16%;left:0;right:0;font-size:15px;letter-spacing:.2em;color:#d8c8f0}
+.shipSub{position:absolute;top:26%;left:0;right:0;font:11px var(--mono);color:rgba(210,190,230,.5)}
+.shipSky .ghostBtn{position:absolute;bottom:14%;left:50%;transform:translateX(-50%)}
+.shipTrail{position:absolute;inset:0;pointer-events:none}
+.shipStreak{position:absolute;width:210px;height:56px;object-fit:contain;opacity:0;
+  filter:drop-shadow(0 0 18px rgba(230,90,220,.9)) hue-rotate(-18deg)}
+.shipStreak.fly{animation:shipFly 1.45s cubic-bezier(.3,.1,.5,1) both}
+@keyframes shipFly{0%{opacity:0;transform:translateX(0) scaleX(.5)}12%{opacity:1;transform:translateX(12vw) scaleX(1)}
+  80%{opacity:.9}100%{opacity:0;transform:translateX(135vw) scaleX(1.5)}}
+.mCrowd .crowdWrap{position:relative;height:min(360px,46vh);overflow:hidden;
+  background:linear-gradient(180deg,rgba(20,16,22,.9),rgba(8,10,14,.95))}
+.crowdNpc{position:absolute;inset:0}
+.crowdNpc i{position:absolute;bottom:0;width:34px;border-radius:16px 16px 0 0;
+  background:linear-gradient(180deg,rgba(40,44,48,.9),rgba(12,14,17,1));
+  box-shadow:0 0 24px rgba(220,80,40,.12);animation:crowdWalk 4s ease-in-out infinite}
+@keyframes crowdWalk{0%{transform:translateX(-30px) scaleY(.96)}50%{transform:translateX(30px) scaleY(1.02)}100%{transform:translateX(-30px) scaleY(.96)}}
+.crowdTxt{position:absolute;top:14%;left:0;right:0;font-size:15px;letter-spacing:.2em;color:#e7dfd2}
+.crowdTxt span{display:block;font:11px var(--mono);color:rgba(215,210,200,.45);margin-top:10px}
+.crowdWrap .ghostBtn{position:absolute;bottom:12%;left:50%;transform:translateX(-50%)}
+
+/* 水龙头 */
+.mFaucet .faucetStage{position:relative;height:min(330px,42vh);overflow:hidden;
+  background:radial-gradient(circle at 50% 70%,rgba(60,70,74,.5),rgba(8,11,14,.98))}
+.faucetObj{position:absolute;left:50%;top:34%;transform:translateX(-50%);width:190px;height:150px}
+.fPipe{position:absolute;left:20px;top:0;width:150px;height:16px;background:linear-gradient(180deg,#8d9290,#3b4042);border-radius:3px}
+.fBody{position:absolute;left:74px;top:14px;width:42px;height:66px;background:linear-gradient(90deg,#4b5254,#9aa2a1,#3d4446);border-radius:5px}
+.fWheel{position:absolute;left:56px;top:-16px;width:78px;height:78px;border:9px solid #7c8482;border-radius:50%;
+  box-shadow:inset 0 0 0 6px rgba(20,24,26,.8),0 6px 20px rgba(0,0,0,.6);transition:transform .08s linear}
+.fWheel i{position:absolute;left:50%;top:50%;width:70px;height:5px;background:#7c8482;transform-origin:0 50%;margin-left:-35px;margin-top:-2px}
+.fWheel i:nth-child(2){transform:rotate(45deg)}.fWheel i:nth-child(3){transform:rotate(90deg)}.fWheel i:nth-child(4){transform:rotate(135deg)}
+.fSpout{position:absolute;left:88px;top:80px;width:14px;height:42px;background:linear-gradient(90deg,#4b5254,#9aa2a1,#3d4446);border-radius:0 0 5px 5px}
+.faucetHand{position:absolute;left:58%;top:52%;font-size:52px;filter:grayscale(.6) brightness(.85);transition:transform .1s;z-index:3}
+.faucetDrops,.faucetRain{position:absolute;inset:0;pointer-events:none}
+.dropSpr{position:absolute;top:58%;width:16px;height:16px;animation:dropFall .9s linear both;filter:drop-shadow(0 0 6px rgba(160,210,230,.8))}
+@keyframes dropFall{to{transform:translateY(200px);opacity:0}}
+.splashSpr{position:absolute;bottom:14%;width:22px;height:22px;animation:splash .7s ease-out both}
+@keyframes splash{from{opacity:1;transform:translateY(0) scale(.4)}to{opacity:0;transform:translateY(-40px) scale(1.4)}}
+.rainSpr{position:absolute;top:-10%;height:34px;object-fit:contain;opacity:.55;animation:rainFall linear infinite}
+@keyframes rainFall{to{transform:translateY(120vh)}}
+
+/* 反光点 */
+.mLook .lookWrap{position:relative;height:min(400px,50vh);overflow:hidden;cursor:crosshair;
+  background:radial-gradient(circle at 72% 46%,rgba(50,60,66,.45),rgba(6,8,11,.98))}
+.lookGlint{position:absolute;left:72%;top:46%;width:12px;height:12px;transform:translate(-50%,-50%);
+  border-radius:50%;background:#cfe4ee;box-shadow:none;opacity:.2;transition:opacity .2s}
+/* 去掉画面中间的椭圆与光圈；保留反光点本身与场景 */
+.lookLens{display:none}
+.eyeShine{display:none}
+.lookTxt{position:absolute;bottom:8%;left:0;right:0;font-size:15px;letter-spacing:.18em;color:#e6e2d8}
+.lookTxt span{display:block;font:11px var(--mono);color:rgba(215,210,200,.45);margin-top:10px}
+.lookEye{position:absolute;inset:0;opacity:0;transition:opacity .8s;background:rgba(3,5,8,.92);z-index:4}
+.lookEye.on{opacity:1}
+.lookEye img{position:absolute;left:50%;top:-22%;height:150%;transform:translateX(-50%);object-fit:contain;
+  filter:brightness(1.1) drop-shadow(0 20px 50px #000);animation:eyeZoom 2s ease-out both}
+@keyframes eyeZoom{from{transform:translateX(-50%) scale(1.5)}to{transform:translateX(-50%) scale(1)}}
+.eyeShine{position:absolute;left:50%;top:30%;width:220px;height:90px;transform:translateX(-50%);
+  border:1px solid rgba(210,235,245,.3);border-radius:50%;box-shadow:0 0 60px rgba(180,220,240,.2) inset}
+
+/* 芯片 */
+.mChip .chipWindow{position:relative;height:min(300px,38vh);overflow:hidden;
+  background:linear-gradient(180deg,rgba(16,14,12,.95),rgba(5,6,8,.98));border:1px solid rgba(200,160,110,.18)}
+.chipGlass{position:absolute;left:8%;top:10%;width:84%;height:66%;
+  background:linear-gradient(135deg,rgba(90,100,105,.12),rgba(20,24,28,.5));
+  border:2px solid rgba(120,130,132,.35);box-shadow:inset 0 0 60px rgba(0,0,0,.8)}
+.chipGlass:after{content:'';position:absolute;left:62%;top:0;bottom:0;width:2px;background:rgba(190,200,200,.25);transform:rotate(14deg)}
+.chipTray{position:absolute;left:36%;bottom:16%;width:28%;height:14px;background:#4a4640;border-radius:2px;
+  box-shadow:0 8px 20px rgba(0,0,0,.7);transition:background .25s,box-shadow .25s}
+.chipTray.hot{background:#7a633a;box-shadow:0 0 26px rgba(230,180,95,.55),0 8px 20px rgba(0,0,0,.7)}
+.chipTray.on{background:#8a6b34;box-shadow:0 0 34px rgba(255,170,70,.75)}
+.chipPiece{position:absolute;left:12%;top:56%;width:46px;height:32px;display:grid;place-items:center;
+  background:linear-gradient(135deg,#c8b98a,#6d6347);border:1px solid #e0d3a2;color:#3a3527;font-size:18px;
+  box-shadow:0 0 20px rgba(220,200,140,.4);cursor:grab;touch-action:none;user-select:none;z-index:3;
+  transition:left .18s ease,top .18s ease,transform .18s ease,box-shadow .18s ease}
+.chipPiece.dragging{cursor:grabbing;transition:none;z-index:5;box-shadow:0 0 28px rgba(240,210,140,.65)}
+.chipPiece.returning{transition:left .24s ease,top .24s ease}
+.chipPiece.placed{cursor:default;transform:scale(.82);box-shadow:0 0 24px rgba(240,200,120,.8);
+  transition:left .18s ease,top .18s ease,transform .18s ease}
+.chipScan{position:absolute;left:44%;bottom:17%;width:60px;height:6px;background:#ff7a2a;opacity:0;
+  box-shadow:0 0 30px 10px rgba(255,110,30,.7)}
+.chipScan.on{animation:scanOn 1.4s ease-out both}
+@keyframes scanOn{0%{opacity:0;transform:scaleX(.2)}30%{opacity:1;transform:scaleX(1)}100%{opacity:.8}}
+
+/* 终端：立绘单独占右列，档案行不再被压在立绘下面 */
+.mTerminal .termFrame{position:relative;max-width:760px;margin:0 auto;padding:26px 30px;text-align:left;
+  display:grid;grid-template-columns:minmax(0,1fr) 190px;column-gap:22px;align-items:start;
+  background:#04080a;border:1px solid rgba(120,200,170,.35);box-shadow:0 0 50px rgba(60,160,120,.12) inset;font-family:var(--mono)}
+.termBody{min-width:0;grid-column:1;grid-row:1}
+.termHead{font-size:11px;letter-spacing:.24em;color:rgba(130,220,175,.8);padding-bottom:14px;border-bottom:1px solid rgba(120,200,170,.2)}
+.tPortrait{position:relative;right:auto;top:auto;height:232px;width:auto;justify-self:end;align-self:start;
+  grid-column:2;grid-row:1;margin-top:-26px;opacity:.9;pointer-events:none;
+  filter:drop-shadow(0 10px 24px #000) hue-rotate(30deg)}
+.tRow{display:flex;justify-content:space-between;gap:20px;padding:9px 0;border-bottom:1px dashed rgba(120,200,170,.12);font-size:13px}
+.tRow span{color:rgba(150,200,175,.6);letter-spacing:.1em}
+.tRow b{color:#d6ead9;font-weight:400;letter-spacing:.06em}
+.termFoot{margin-top:16px;font-size:11px;color:rgba(230,180,120,.8);letter-spacing:.08em;line-height:1.8}
+@media (max-width:720px){
+  .mTerminal .termFrame{grid-template-columns:1fr;max-width:560px;padding:22px 24px}
+  .tPortrait{grid-column:1;grid-row:auto;justify-self:center;height:150px;margin:-16px 0 4px;order:-1}
+}
+
+/* 推门 */
+.mDoor .doorFrame{position:relative;height:min(340px,42vh);overflow:hidden;
+  background:linear-gradient(180deg,#14161c,#080a0d)}
+.doorLeaf{position:absolute;left:24%;top:8%;width:52%;height:88%;transform-origin:0 50%;
+  background:linear-gradient(90deg,#2a211c,#4a3527 45%,#241a15);
+  border:3px solid #6b5138;box-shadow:0 0 60px rgba(255,160,60,.15);transition:transform 1.2s cubic-bezier(.3,.1,.3,1)}
+.doorLeaf.open{transform:perspective(800px) rotateY(-72deg)}
+.doorGlass{position:absolute;left:18%;top:12%;width:64%;height:38%;
+  background:linear-gradient(135deg,rgba(220,120,60,.18),rgba(60,40,30,.5));border:2px solid #6b5138}
+.doorBell{position:absolute;right:8%;top:4%;font-size:22px;animation:bellRing 1s ease-in-out 3}
+@keyframes bellRing{50%{transform:rotate(18deg)}}
+.doorNpc{position:absolute;inset:0;pointer-events:none}
+.doorNpc i{position:absolute;bottom:0;width:38px;height:44%;border-radius:20px 20px 0 0;
+  background:linear-gradient(180deg,rgba(60,64,68,.75),rgba(10,12,14,.9));transition:transform .5s}
+.doorNpc.turn i{animation:npcTurn 1.2s ease-in-out both}
+@keyframes npcTurn{0%,100%{transform:rotateY(0)}45%{transform:rotateY(28deg) scaleX(.8)}}
+.doorLight{position:absolute;left:0;right:0;top:0;height:100%;opacity:0;
+  background:linear-gradient(90deg,transparent,rgba(255,150,60,.28),transparent);animation:none}
+.doorLeaf.open~.doorLight{opacity:1;transition:opacity 1s}
+
+/* 照片 */
+.mPhoto .photoCard{position:relative;max-width:420px;margin:0 auto;padding:14px;background:#e8e2d4;
+  box-shadow:0 30px 80px rgba(0,0,0,.8);transform:rotate(-1.2deg)}
+.photoImg{height:min(400px,50vh);overflow:hidden;background:linear-gradient(180deg,#b8bcc0,#7c8288)}
+.photoImg img{width:100%;height:100%;object-fit:contain;object-position:center top;
+  filter:contrast(1.05) saturate(.95);transform:scale(1.04)}
+.photoMeta{padding:14px 6px 4px;text-align:left;color:#2a2824}
+.photoMeta b{display:block;font-size:18px;letter-spacing:.2em}
+.photoMeta span{display:block;font:11px var(--mono);margin-top:6px;color:#6a655a}
+.photoMeta em{display:block;font:10px var(--mono);font-style:normal;margin-top:10px;padding-top:8px;
+  border-top:1px solid rgba(0,0,0,.18);color:#9a4030;letter-spacing:.1em}
+
+/* 点酒 */
+.mDrink .shelf{position:relative;height:min(280px,36vh);margin-bottom:14px;overflow:hidden;
+  background:linear-gradient(180deg,#1b1410,#0a0807);border:1px solid rgba(200,160,100,.2)}
+.shelf:before{content:'';position:absolute;left:5%;right:5%;bottom:16%;height:8px;background:#3c2a1b;box-shadow:0 8px 20px #000}
+.shelfBottles{position:absolute;left:8%;right:8%;bottom:18%;display:flex;justify-content:space-around;align-items:flex-end;gap:12px;height:78%}
+.bottle{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;padding:8px 4px;flex:1;
+  border:1px solid transparent;transition:all .3s;max-width:150px}
+.bottle:hover{background:rgba(217,179,108,.08);border-color:rgba(217,179,108,.3);transform:translateY(-6px)}
+.bottle i{display:block;width:38px;height:96px;border-radius:5px 5px 3px 3px;
+  background:linear-gradient(90deg,rgba(0,0,0,.5),transparent 30%,rgba(255,255,255,.22) 55%,rgba(0,0,0,.5)),
+    linear-gradient(180deg,var(--bc),rgba(20,16,12,.9));
+  box-shadow:0 0 18px rgba(0,0,0,.6),inset 0 -20px 20px rgba(0,0,0,.4)}
+.bottle i:before{content:'';display:block;width:14px;height:20px;margin:-20px auto 0;background:var(--bc);border-radius:2px}
+.bottle span{font-size:12px;letter-spacing:.08em;color:#ddd6c8;white-space:nowrap}
+.bottle em{font:10px var(--mono);font-style:normal;color:var(--accent)}
+.bottle u{position:absolute;top:2px;right:6px;text-decoration:none;color:var(--ecg);opacity:0;font-size:15px}
+.bottle.picked{border-color:var(--ecg);background:rgba(120,220,160,.1)}
+.bottle.picked u{opacity:1;animation:pop .5s ease both}
+@keyframes pop{from{transform:scale(0)}to{transform:scale(1)}}
+.drinkMsg{min-height:46px;font-size:13px;line-height:1.8;color:#d8d2c4;letter-spacing:.06em;transition:color .3s}
+.drinkMsg.good{color:var(--ecg)}
+.drinkMsg.soft{opacity:.4}
+.miniBox.toastUp:before{content:'男主举杯';position:absolute;left:50%;top:26%;transform:translateX(-50%);
+  font-size:20px;letter-spacing:.3em;color:var(--accent);animation:toastUp 1.9s ease-out both}
+@keyframes toastUp{0%{opacity:0;transform:translate(-50%,20px)}40%{opacity:1;transform:translate(-50%,0)}100%{opacity:0}}
+
+/* 找刀 / 对峙 / 举手 */
+.mKnife .knifeScene{position:relative;height:min(320px,40vh);overflow:hidden;
+  background:linear-gradient(180deg,#1a1418,#080a0d)}
+.knifeGlass{position:absolute;inset:8%;border:1px solid rgba(200,160,120,.18);background:rgba(255,255,255,.015)}
+.knifeObj{position:absolute;left:32%;top:62%;width:64px;height:14px;cursor:pointer;
+  background:linear-gradient(90deg,#8f979a,#e0e6e6,#4a5052);transform:rotate(-24deg);
+  box-shadow:0 0 14px rgba(200,230,235,.35);animation:knifeGlint 2.4s ease-in-out infinite}
+.knifeObj i{position:absolute;left:-18px;top:2px;width:22px;height:10px;background:#3a2c22;border-radius:2px}
+@keyframes knifeGlint{50%{box-shadow:0 0 26px rgba(220,245,250,.8)}}
+.knifeObj.pull{animation:knifePull 1.3s cubic-bezier(.3,.1,.3,1) both}
+@keyframes knifePull{to{transform:translate(180px,-120px) rotate(65deg);opacity:0}}
+.knifeHint{position:absolute;top:10%;left:0;right:0;font-size:15px;letter-spacing:.18em;color:#e6e0d4}
+.knifeSub{position:absolute;top:20%;left:0;right:0;font:11px var(--mono);color:rgba(215,210,200,.45)}
+.knifeReveal{position:absolute;top:46%;left:0;right:0;opacity:0;font-size:17px;letter-spacing:.16em;color:var(--accent);transition:opacity .6s}
+.knifeReveal.on{opacity:1}
+.mDuel .duelWrap{position:relative;height:min(300px,38vh);
+  background:radial-gradient(circle,rgba(50,20,20,.5),rgba(4,5,8,.96))}
+.duelL,.duelR{position:absolute;top:14%;font-size:22px;letter-spacing:.3em;color:#e6ddd0}
+.duelL{left:8%}.duelR{right:8%}
+.duelCross{position:absolute;left:50%;top:50%;width:340px;height:340px;transform:translate(-50%,-50%)}
+.duelCross i{position:absolute;left:0;top:50%;width:100%;height:3px;background:linear-gradient(90deg,transparent,#d8d2c4,transparent);opacity:.35}
+.duelCross i:last-child{transform:rotate(90deg)}
+.miniBox.fired .duelCross i{opacity:1;animation:crossFlash 1.4s ease-out both}
+.miniBox.fired .duelL{animation:duelL 1.2s ease both}
+.miniBox.fired .duelR{animation:duelR 1.2s ease both}
+@keyframes crossFlash{0%{transform:scaleX(.1);filter:brightness(3)}30%{transform:scaleX(1)}100%{opacity:.5}}
+@keyframes duelL{to{transform:translateX(60px);opacity:.7}}
+@keyframes duelR{to{transform:translateX(-60px);opacity:.7}}
+.duelSub{position:absolute;bottom:8%;left:0;right:0;font:11px var(--mono);color:rgba(215,210,200,.45)}
+.mHands .handsWrap{position:relative;height:min(280px,36vh);
+  background:linear-gradient(180deg,#17181c,#07090b)}
+.handsGun{position:absolute;left:50%;bottom:22%;transform:translateX(-50%);width:88px;height:26px;
+  background:linear-gradient(90deg,#3c4144,#8e9698,#33383a);border-radius:3px;transition:all 1s}
+.handsGun.down{transform:translate(-50%,30px) rotate(-8deg);opacity:.5}
+.handsFig{position:absolute;left:50%;bottom:10%;transform:translateX(-50%);width:140px;height:150px}
+.handsFig i{position:absolute;bottom:0;width:20px;height:90px;background:linear-gradient(180deg,#4a5054,#202428);border-radius:10px}
+.handsFig i:first-child{left:18px}.handsFig i:last-child{right:18px}
+.handsFig.up i{animation:handsRaise 1.2s ease both}
+@keyframes handsRaise{to{height:150px;transform:translateY(-46px)}}
+.handsTxt{position:absolute;top:8%;left:0;right:0;font-size:15px;letter-spacing:.18em;color:#e6e0d4}
+.handsTxt span{display:block;font:11px var(--mono);color:rgba(215,210,200,.45);margin-top:10px}
+
+/* 砖墙 */
+.mBrick .brickWall{position:relative;display:grid;grid-template-columns:repeat(10,1fr);gap:3px;
+  padding:16px;background:#1a1512;cursor:pointer;min-height:240px}
+.brickWall i{display:block;height:32px;background:linear-gradient(180deg,#5a3d2c,#3c281e);border:1px solid rgba(0,0,0,.4);
+  transition:all .3s}
+.brickWall i.loose{box-shadow:inset 0 0 0 1px rgba(217,179,108,.25)}
+.brickWall i.loose:hover{filter:brightness(1.5)}
+.brickWall i.pressed{background:#1a1a1a;transform:translateY(4px)}
+.brickDoor{position:absolute;left:50%;top:50%;width:0;height:0;background:#000;transform:translate(-50%,-50%);
+  transition:all 1.6s cubic-bezier(.3,.1,.3,1);z-index:3;pointer-events:none}
+.brickDoor.open{width:min(760px,86vw);height:min(420px,58vh);box-shadow:0 0 0 9999px rgba(0,0,0,.7)}
+
+/* 巡览 */
+.mTour .tourStage{position:relative;height:min(400px,50vh);overflow:hidden;background:#05070a}
+#tourImg{width:100%;height:100%;object-fit:cover;opacity:0;transform:scale(1.12);transition:opacity .8s,transform 4s}
+#tourImg.on{opacity:1;transform:scale(1.02)}
+.tourCap{position:absolute;left:0;right:0;bottom:0;padding:26px;text-align:center;font-size:14px;
+  letter-spacing:.12em;color:#efe9dc;background:linear-gradient(180deg,transparent,rgba(0,0,0,.85));opacity:0;transition:opacity .6s}
+.tourCap.on{opacity:1}
+.tourBar{position:absolute;top:12px;left:0;right:0;display:flex;justify-content:center;gap:6px}
+.tourBar i{width:26px;height:2px;background:rgba(255,255,255,.25)}
+.tourBar i.on{background:var(--accent)}
+
+/* 淋雨 */
+.mRainWay .rwStage{position:relative;height:min(360px,46vh);overflow:hidden;
+  background:radial-gradient(circle at 50% 40%,rgba(90,110,118,.5),rgba(6,9,12,.98))}
+.rwRain{position:absolute;inset:0;pointer-events:none}
+.rwDrop{position:absolute;top:-8%;width:12px;height:30px;object-fit:contain;opacity:.65;
+  animation:rwFall linear infinite}
+@keyframes rwFall{to{transform:translateY(120vh)}}
+.rwFigure{position:absolute;left:50%;bottom:-8%;height:96%;transform:translateX(-50%);opacity:.5}
+.rwFigure img{height:100%;width:auto;filter:brightness(.7)}
+.rwFace{position:absolute;left:50%;top:0;height:150%;transform:translateX(-50%) scale(1.7);
+  opacity:0;transition:opacity 1.2s,transform 1.6s;overflow:hidden}
+.rwFace.on{opacity:.9}
+.rwFace img{height:100%;width:auto;filter:brightness(1.15) saturate(1.1)}
+.rwPrompt{font-size:16px;letter-spacing:.2em;color:var(--accent);margin:18px 0 6px}
+.rwBtns{display:flex;justify-content:center;gap:12px;margin-top:12px}
+.rwMsg{min-height:24px;margin-top:14px;font-size:13px;color:#d8d2c4;letter-spacing:.08em}
+
+/* 点亮植物 */
+.mPlants .plantScene{position:relative;height:min(360px,46vh);overflow:hidden;
+  background:linear-gradient(180deg,rgba(30,40,32,.9),rgba(8,12,10,.98));border:1px solid rgba(140,180,120,.15)}
+.plantObj{position:absolute;width:56px;height:66px;transform:translate(-50%,-50%);
+  filter:grayscale(.85) brightness(.48);transition:filter .7s,transform .5s}
+.plantObj:hover{transform:translate(-50%,-50%) scale(1.1)}
+.plantObj i{position:absolute;left:50%;bottom:8px;width:8px;height:34px;background:#4a5a3a;transform-origin:50% 100%;border-radius:6px}
+.plantObj i:nth-child(1){transform:rotate(-32deg)}
+.plantObj i:nth-child(2){transform:rotate(0)}
+.plantObj i:nth-child(3){transform:rotate(32deg)}
+.plantObj u{position:absolute;left:50%;top:2px;transform:translateX(-50%);width:26px;height:26px;
+  text-decoration:none;border-radius:50%;background:var(--ph);font-size:14px;text-align:center;line-height:26px;color:#23180f}
+.plantObj.lit{filter:grayscale(0) brightness(1.18) drop-shadow(0 0 18px var(--ph))}
+.plantLabels{position:absolute;inset:0;pointer-events:none}
+.plantLabel{position:absolute;transform:translate(-50%,-50%);text-align:center;opacity:0;transition:opacity .6s;
+  background:rgba(6,10,8,.86);border:1px solid rgba(200,190,150,.35);padding:8px 12px;white-space:nowrap}
+.plantLabel.on{opacity:1}
+.plantLabel b{display:block;font-size:14px;letter-spacing:.16em;color:var(--accent)}
+.plantLabel span{display:block;font:9px var(--mono);color:rgba(210,215,200,.6);margin-top:4px}
+.plantButterfly{position:absolute;font-size:26px;color:#e8cf7a;transition:all 1.4s cubic-bezier(.2,.7,.2,1);
+  animation:bfFlap 1.1s ease-in-out infinite}
+@keyframes bfFlap{50%{transform:scaleX(.35) translateY(-10px)}}
+#pbf2{animation-delay:.4s}
+
+/* 收音机 / 花开 / 门 */
+.mRadio .radioObj{position:relative;width:min(360px,70%);height:170px;margin:0 auto;
+  background:linear-gradient(180deg,#5a4a38,#2e271f);border:6px solid #1d1915;border-radius:10px;
+  box-shadow:0 24px 50px rgba(0,0,0,.7)}
+.radioGrill{position:absolute;left:7%;top:16%;width:56%;height:66%;
+  background:repeating-linear-gradient(90deg,#2a231c 0 4px,#6d5b45 4px 7px);border-radius:4px}
+.radioKnob{position:absolute;right:9%;top:38%;width:54px;height:54px;border-radius:50%;
+  background:radial-gradient(circle,#b8a887,#4a3f30);border:3px solid #241d16}
+.radioKnob:after{content:'';position:absolute;left:50%;top:8%;width:3px;height:40%;background:#241d16}
+.radioKnob.turn{animation:knobTurn 2.8s ease-in-out both}
+@keyframes knobTurn{0%{transform:rotate(0)}30%{transform:rotate(70deg)}60%{transform:rotate(-40deg)}100%{transform:rotate(22deg)}}
+.radioWave{position:absolute;left:-10%;right:-10%;top:36%;height:2px;background:rgba(140,220,170,.8);opacity:0}
+.radioWave.on{opacity:1;animation:waveForm .16s linear infinite}
+@keyframes waveForm{50%{transform:scaleY(14);box-shadow:0 0 30px rgba(140,220,170,.6)}}
+.mBloom .bloomStage{position:relative;height:min(300px,38vh);overflow:hidden;
+  background:radial-gradient(circle at 50% 40%,rgba(120,130,90,.28),rgba(6,9,8,.98))}
+.bloomPot{position:absolute;left:50%;bottom:8%;transform:translateX(-50%);width:74px;height:62px;
+  background:linear-gradient(180deg,#b9b2a4,#6e6a60);border-radius:4px 4px 14px 14px;box-shadow:0 16px 30px #000}
+.bloomBud{position:absolute;left:50%;bottom:58px;transform:translateX(-50%);width:20px;height:30px;
+  background:linear-gradient(180deg,#8f78a8,#5d6a46);border-radius:50% 50% 40% 40%;transform-origin:50% 100%;
+  animation:budBreath 3s ease-in-out infinite}
+@keyframes budBreath{50%{transform:translateX(-50%) scale(1.06)}}
+.bloomBud.open{animation:bloomOpen 3s ease-out both}
+@keyframes bloomOpen{0%{transform:translateX(-50%) scale(1)}100%{transform:translateX(-50%) scale(2.6) rotate(12deg);
+  border-radius:50%;background:radial-gradient(circle,#f2c6d6 20%,#c47fa8 60%,#7a4a78);
+  box-shadow:0 0 50px 18px rgba(230,150,190,.35)}}
+.bloomLight{position:absolute;left:36%;top:0;width:28%;height:100%;
+  background:linear-gradient(160deg,rgba(255,240,190,.16),transparent 70%);transform:skewX(-16deg)}
+.bloomBtns{display:flex;justify-content:center;gap:12px;margin-top:12px}
+.bloomClock{margin-top:14px;font:12px var(--mono);color:var(--accent);letter-spacing:.2em}
+.mNightDoor .ndClock{position:absolute;right:8%;top:8%;font:15px var(--mono);letter-spacing:.2em;color:var(--accent)}
+.mNightDoor .ndDoor{position:relative;height:min(260px,34vh);
+  background:linear-gradient(90deg,#22262a,#3b4044 45%,#1c2023);border:2px solid #4a5054}
+.mNightDoor .ndHandle{position:absolute;right:14%;top:52%;width:44px;height:12px;background:#a6aca8;border-radius:3px}
+.mNightDoor .ndSparks{position:absolute;inset:0;pointer-events:none}
+.ndSpark{position:absolute;width:24px;height:24px;object-fit:contain;animation:sparkRise .7s ease-out both}
+@keyframes sparkRise{to{transform:translateY(-60px) rotate(90deg);opacity:0}}
+
+/* 通用按住 */
+.mHold .holdStage{position:relative;height:min(280px,34vh);overflow:hidden;
+  background:radial-gradient(circle at 50% 60%,rgba(70,80,84,.4),rgba(6,8,11,.96));
+  background-size:cover;background-position:center}
+/* 场景图压暗，只留下「此刻」的轮廓 */
+.mHold .holdStage:before{content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 50% 50%,rgba(3,5,8,.62),rgba(2,3,5,.94))}
+.holdGlow{position:absolute;left:50%;top:50%;width:180px;height:180px;transform:translate(-50%,-50%);
+  border-radius:50%;background:radial-gradient(circle,rgba(217,179,108,.24),transparent 70%);animation:holdGlow 2.4s ease-in-out infinite}
+@keyframes holdGlow{50%{transform:translate(-50%,-50%) scale(1.25);opacity:.6}}
+.holdParticles{position:absolute;inset:0;pointer-events:none}
+.holdP{position:absolute;width:26px;height:26px;object-fit:contain;animation:holdPUp .9s ease-out both}
+@keyframes holdPUp{to{transform:translateY(-70px) rotate(140deg);opacity:0}}
+.holdWidget{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:20px}
+.holdHint{font-size:16px;letter-spacing:.24em;color:var(--accent)}
+.holdSub{font-size:11px;letter-spacing:.1em;color:rgba(215,210,200,.48);font-family:var(--ui)}
+.holdBtn{position:relative;width:96px;height:96px;margin-top:8px;border-radius:50%;display:grid;place-items:center;
+  background:rgba(20,24,28,.8);border:1px solid rgba(217,179,108,.35);touch-action:none;user-select:none}
+.holdBtn:before{content:'';position:absolute;inset:-6px;border-radius:50%;
+  background:conic-gradient(var(--accent) calc(var(--p,0)*1deg),rgba(255,255,255,.07) 0);
+  -webkit-mask:radial-gradient(circle,transparent 62%,#000 63%);mask:radial-gradient(circle,transparent 62%,#000 63%)}
+.holdBtn.isDown{box-shadow:0 0 40px rgba(217,179,108,.35);border-color:var(--accent)}
+.holdCore{width:56px;height:56px;border-radius:50%;background:radial-gradient(circle,#e6d2a5,#8b7345);
+  box-shadow:0 0 30px rgba(217,179,108,.5);transition:transform .1s}
+.holdTxt{position:absolute;font-size:10px;letter-spacing:.2em;color:#2c2415}
+.holdNote{min-height:20px;font-size:11px;color:rgba(215,210,200,.5);letter-spacing:.08em}
+
+/* 心电监视器 */
+.mEcg .ecgMonitor{position:relative;background:#040806;border:1px solid rgba(120,220,160,.25);padding:12px;
+  box-shadow:inset 0 0 60px rgba(20,80,40,.18)}
+#ecgMini{width:100%;height:180px;display:block}
+.ecgLabel{display:flex;justify-content:space-between;font:10px var(--mono);letter-spacing:.2em;color:rgba(130,220,170,.6);padding-top:8px}
+
+/* 地籍检索 */
+.mArchive .arcScreen{background:#05090a;border:1px solid rgba(130,180,150,.25);padding:22px;text-align:left;font-family:var(--mono);
+  box-shadow:inset 0 0 70px rgba(20,70,40,.14)}
+.arcHead{font-size:11px;letter-spacing:.24em;color:rgba(130,200,160,.7);padding-bottom:14px;border-bottom:1px solid rgba(130,180,150,.2)}
+.arcSearch{display:flex;align-items:center;gap:10px;margin:18px 0 6px;font-size:12px;color:rgba(150,200,170,.7)}
+.arcSearch input{flex:1;padding:9px 12px;background:rgba(10,20,16,.8);border:1px solid rgba(130,180,150,.3);
+  color:#d6ead9;font-family:var(--mono);font-size:13px;outline:none}
+.arcSearch input:focus{border-color:var(--ecg);box-shadow:0 0 18px rgba(120,220,160,.2)}
+.arcSearch button{padding:9px 14px;border:1px solid rgba(130,180,150,.3);color:var(--ecg);
+  background:transparent;font-family:var(--mono);font-size:12px;letter-spacing:.08em;cursor:pointer}
+.arcSearch.ready input{border-color:rgba(120,220,160,.75)}
+.arcSearch.ready button{background:rgba(120,220,160,.12);border-color:var(--ecg);animation:arcReady 1.8s ease-in-out infinite}
+@keyframes arcReady{50%{box-shadow:0 0 20px rgba(120,220,160,.28)}}
+.arcHint{min-height:17px;margin:0 0 8px;font-size:10.5px;line-height:1.7;color:rgba(180,215,190,.62);letter-spacing:.04em}
+.arcHint:before{content:'▸ ';color:var(--accent)}
+@media (max-width:520px){
+  .arcSearch{flex-wrap:wrap}
+  .arcSearch input{flex:1 1 calc(100% - 48px);min-width:0}
+  .arcSearch button{flex:0 0 100%;margin-top:2px}
+}
+.arcResult{min-height:60px;font-size:13px;line-height:2;color:#d6ead9;letter-spacing:.04em}
+.arcResult.found{color:#f0d2a0;text-shadow:0 0 20px rgba(240,190,110,.35)}
+.arcTyping:after{content:'▌';animation:blink .7s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+
+/* 代码 / 推送 / 弹匣 / 分流 */
+.mCode .codeWrap{position:relative;padding:30px;background:#04070a;border:1px solid rgba(120,200,170,.2);
+  box-shadow:inset 0 0 80px rgba(30,120,90,.15)}
+#codeTxt{font:13px/2 var(--mono);color:rgba(150,235,185,.9);text-align:left;margin:0;
+  text-shadow:0 0 16px rgba(100,230,160,.5);animation:codeFloat 4s ease-in-out infinite}
+@keyframes codeFloat{50%{transform:translateY(-6px);text-shadow:0 0 26px rgba(100,230,160,.8)}}
+.codeGlow{position:absolute;left:50%;top:50%;width:70%;height:60%;transform:translate(-50%,-50%);
+  background:radial-gradient(circle,rgba(80,220,150,.12),transparent 70%);pointer-events:none}
+.mBroadcast .bcScreen{position:relative;height:min(360px,44vh);background:#050608;overflow:hidden;
+  border:1px solid rgba(200,200,200,.14)}
+.bcNoise{position:absolute;inset:0;opacity:.14;
+  background-image:repeating-linear-gradient(0deg,#fff 0 1px,transparent 1px 3px),
+    repeating-linear-gradient(90deg,#888 0 1px,transparent 1px 4px);animation:noiseMove .18s steps(2) infinite}
+@keyframes noiseMove{50%{transform:translate(3px,-2px)}}
+.bcLines{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;gap:14px;padding:30px;z-index:2}
+.bcLine{font:13px/1.8 var(--mono);color:#e8e8e4;opacity:0;transform:translateX(-14px);transition:all .6s;
+  text-shadow:0 0 14px rgba(255,255,255,.4)}
+.bcLine.on{opacity:1;transform:none}
+.mEmpty .emptyMag{position:relative;height:min(200px,26vh);display:grid;place-items:center}
+.magBody{width:70px;height:130px;background:linear-gradient(90deg,#3c4144,#8e9698,#33383a);border-radius:4px;
+  display:flex;flex-direction:column;justify-content:flex-end;gap:5px;padding:8px;transition:transform .9s}
+.magBody i{height:12px;background:#1d2022;border-radius:2px}
+.magBody.out{transform:translateY(90px) rotate(-12deg);opacity:.5}
+.mTide .tideGrid{display:grid;grid-template-columns:repeat(10,1fr);gap:8px;margin:0 auto;max-width:600px}
+.tideGrid i{aspect-ratio:1;border-radius:50%;background:rgba(120,180,140,.12);border:1px solid rgba(120,200,150,.2);
+  transition:all .5s}
+.tideGrid i.on{background:radial-gradient(circle,#b8f0c8,#4a9a68);box-shadow:0 0 22px 5px rgba(120,230,160,.55)}
+.tideWord{height:52px;font-size:24px;letter-spacing:.4em;color:var(--accent);margin-top:22px;opacity:0}
+.tideWord.on{animation:wordIn .9s ease both}
+@keyframes wordIn{0%{opacity:0;transform:translateY(10px)}30%{opacity:1}100%{opacity:.85}}
+
+/* 调频 */
+.mTuning .tuneWrap{position:relative;height:min(230px,30vh);background:#060808;border:1px solid rgba(140,200,160,.18);
+  overflow:hidden;cursor:ew-resize}
+.tuneDial{position:absolute;left:50%;top:50%;width:110px;height:110px;transform:translate(-50%,-50%);
+  border-radius:50%;border:8px solid #3a403c;background:radial-gradient(circle,#6a726c,#2a302c);transition:transform .15s}
+.tuneDial:after{content:'';position:absolute;left:50%;top:8%;width:4px;height:42%;background:var(--accent)}
+.tuneBars{position:absolute;left:0;right:0;bottom:10%;height:60px;display:flex;align-items:flex-end;justify-content:center;gap:3px}
+.tuneBars i{width:6px;background:linear-gradient(180deg,rgba(140,220,170,.7),rgba(60,120,90,.2));transition:height .1s}
+.tuneFreq{position:absolute;top:8%;left:0;right:0;font:11px var(--mono);letter-spacing:.24em;color:rgba(140,220,170,.7)}
+
+/* 合诗 */
+.mDuet{background:#030405;border-color:rgba(200,200,190,.14)}
+.duetScreen{font-family:var(--mono)}
+.duetHead{display:grid;grid-template-columns:1fr 1fr;gap:26px;padding-bottom:12px;
+  border-bottom:1px solid rgba(200,200,190,.18);font-size:10px;letter-spacing:.3em;color:rgba(217,179,108,.6)}
+.duetBody{max-height:min(420px,52vh);overflow:hidden}
+.duetRow{display:grid;grid-template-columns:1fr 1fr;gap:26px;padding:9px 0;
+  border-bottom:1px dashed rgba(200,200,190,.08);opacity:0;animation:duetIn .8s ease both}
+@keyframes duetIn{to{opacity:1}}
+.duetBody.scrolling .duetRow{animation:duetScroll 6s linear both}
+@keyframes duetScroll{0%{transform:translateY(0);opacity:1}100%{transform:translateY(-40px);opacity:.9}}
+.duetL{font-size:13px;line-height:1.9;color:#e0dbcf;letter-spacing:.06em}
+.duetR{font-size:12px;line-height:1.9;color:rgba(150,190,165,.85);letter-spacing:.02em}
+
+/* 沉核心 */
+.mSink .sinkStage{position:relative;height:min(380px,48vh);overflow:hidden;
+  background:linear-gradient(180deg,#0a1013,#050809)}
+.sinkWater{position:absolute;left:0;right:0;bottom:0;height:62%;
+  background:linear-gradient(180deg,rgba(40,80,90,.4),rgba(4,10,14,.95));
+  box-shadow:inset 0 20px 60px rgba(120,200,220,.12)}
+.sinkWater:after{content:'';position:absolute;left:0;right:0;top:0;height:2px;
+  background:linear-gradient(90deg,transparent,rgba(160,220,230,.5),transparent);animation:waterLine 3s ease-in-out infinite}
+@keyframes waterLine{50%{transform:translateY(8px);opacity:.5}}
+.sinkCore{position:absolute;left:50%;top:44%;width:64px;height:64px;transform:translate(-50%,-50%);
+  border-radius:50%;background:radial-gradient(circle,#9fe4ff,#2b78a8 60%,#123a52);
+  box-shadow:0 0 60px 22px rgba(80,180,230,.45);animation:corePulse 2.6s ease-in-out infinite}
+@keyframes corePulse{50%{box-shadow:0 0 90px 34px rgba(80,180,230,.6)}}
+.sinkLines{position:absolute;left:6%;right:6%;top:8%;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.sinkLines div{font:12px/1.7 var(--mono);color:rgba(190,225,210,.9);opacity:0;transform:translateY(8px);
+  transition:all .6s;text-shadow:0 0 14px rgba(140,220,190,.4)}
+.sinkLines div.on{opacity:1;transform:none}
+
+/* 通用兜底 */
+.mGeneric .genericArt{height:min(240px,30vh);
+  background:radial-gradient(circle,rgba(120,150,140,.28),rgba(6,9,11,.96))}
+
+/* ============================================================
+   Question 批次 · 场景内演出
+   目标：不再出现「暗底卡片 + 圆形按住按钮」的独立界面。
+   画面铺满舞台，交互只在画面上进行，进度用底部细线表示。
+   ============================================================ */
+.miniLayer.mScene{background:none}
+.miniLayer.mScene .miniScrim{display:none}
+.miniLayer.mScene .miniBox{display:none}
+.scStage{position:absolute;inset:0;overflow:hidden;background:#04060a;cursor:pointer;touch-action:none}
+.scShot{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;
+  transform:scale(1.03);transition:opacity 1.1s ease,transform 5.5s cubic-bezier(.22,.6,.3,1);will-change:opacity,transform}
+.scShot.on{opacity:1}
+.scShot.tiltUp{transform:scale(1.16) translateY(-2.2%)}
+.scDark{position:absolute;inset:0;background:radial-gradient(circle at 50% 46%,rgba(4,6,9,.55),rgba(2,3,5,.94))}
+.scVig{position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(118% 90% at 50% 46%,transparent 30%,rgba(0,0,0,.62) 78%,rgba(0,0,0,.88) 100%)}
+.scCap{position:absolute;left:50%;bottom:12.5%;transform:translateX(-50%) translateY(12px);
+  width:min(840px,86vw);text-align:center;font-size:15px;line-height:1.95;letter-spacing:.06em;
+  color:#f0ece3;text-shadow:0 3px 22px rgba(0,0,0,.95);opacity:0;transition:opacity .8s,transform .8s;pointer-events:none}
+.scCap.on{opacity:1;transform:translateX(-50%)}
+/* 字幕底板：改到伪元素上做径向衰减，避免出现一条生硬的黑矩形边 */
+.scCap{padding:12px 22px}
+.scCap:before{content:'';position:absolute;left:-16%;right:-16%;top:-46%;bottom:-42%;z-index:-1;
+  pointer-events:none;
+  background:radial-gradient(ellipse at 50% 50%,rgba(3,5,8,.74),rgba(3,5,8,.44) 44%,rgba(3,5,8,.12) 68%,transparent 82%)}
+.scCap em{display:block;font:10px var(--mono);font-style:normal;letter-spacing:.3em;
+  color:rgba(217,179,108,.8);margin-bottom:9px}
+.scHold{position:absolute;left:50%;bottom:7%;transform:translateX(-50%);width:min(360px,54vw);height:2px;
+  background:rgba(255,255,255,.13);opacity:0;transition:opacity .5s;pointer-events:none}
+.scHold.on{opacity:1}
+.scHold i{display:block;height:100%;width:0;
+  background:linear-gradient(90deg,rgba(217,179,108,.35),#ecc98c);box-shadow:0 0 10px rgba(217,179,108,.55)}
+.scHoldTxt{position:absolute;left:50%;bottom:10%;transform:translateX(-50%);
+  font:10px var(--mono);letter-spacing:.26em;color:rgba(232,227,215,.45);opacity:0;transition:opacity .5s;pointer-events:none}
+.scHoldTxt.on{opacity:1}
+.miniSkip.scSkip{right:2.6%;top:3.4%;opacity:.5}
+.miniSkip.scSkip:hover{opacity:1}
+
+/* 抬头看天幕 */
+.skyFlare{position:absolute;left:22%;top:16%;width:34%;height:120px;opacity:0;pointer-events:none;
+  background:radial-gradient(closest-side,rgba(150,190,255,.55),rgba(90,130,255,.16) 55%,transparent 75%);
+  filter:blur(6px);transform:rotate(-6deg)}
+.skyFlare.fly{animation:skyFly 2.2s cubic-bezier(.3,.1,.4,.9) forwards}
+@keyframes skyFly{0%{opacity:0;transform:translateX(-18%) rotate(-6deg) scaleX(.6)}
+  18%{opacity:.95}70%{opacity:.8}100%{opacity:0;transform:translateX(120%) rotate(-6deg) scaleX(1.5)}}
+
+/* 穿过人群 */
+.crowdPic{filter:saturate(.92)}
+.crowdFg{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.crowdFg i{position:absolute;bottom:-4%;width:7.5%;border-radius:44% 44% 0 0;
+  background:linear-gradient(180deg,rgba(6,8,12,.86),rgba(4,6,9,.96));
+  animation:passBy var(--sp, .9s) ease-out forwards;filter:blur(1.5px)}
+@keyframes passBy{0%{transform:translateY(8%) scale(1.02);opacity:0}
+  22%{opacity:.9}100%{transform:translateY(-6%) scale(1.32);opacity:0}}
+.scStage.isStep{animation:stepBob .42s ease-out}
+@keyframes stepBob{0%{transform:translateY(0)}40%{transform:translateY(-5px)}100%{transform:translateY(0)}}
+
+/* 水龙头近景 */
+.fShot{transform:scale(1.02)}
+.fStream{position:absolute;left:33.2%;top:49%;width:4px;height:13%;transform-origin:50% 0;
+  background:linear-gradient(180deg,rgba(190,225,235,.72),rgba(150,200,220,.12));border-radius:2px;
+  transition:opacity .18s,transform .18s}
+.fDrop,.fSplash{position:absolute;pointer-events:none;opacity:.8;width:12px;height:12px;object-fit:contain}
+.fDrop{animation:fFall .95s linear forwards}
+.fSplash{animation:fSplash .7s ease-out forwards}
+@keyframes fFall{0%{transform:translateY(0);opacity:.9}100%{transform:translateY(46px);opacity:0}}
+@keyframes fSplash{0%{transform:scale(.4);opacity:.9}100%{transform:scale(1.9) translateY(-10px);opacity:0}}
+
+/* 找反光：镜头拉近后左右环顾 */
+.lookView{position:absolute;inset:0;overflow:hidden}
+.lookPan{position:absolute;top:0;left:0;width:190%;height:100%;transition:transform .18s ease-out;will-change:transform}
+.lookImg{width:100%;height:100%;object-fit:cover;display:block}
+.lookGlint{position:absolute;left:58%;top:41%;width:52px;height:52px;margin:-26px 0 0 -26px;opacity:0;
+  background:radial-gradient(circle,rgba(255,255,255,.95) 0 12%,rgba(200,230,255,.55) 26%,transparent 62%);
+  border-radius:50%;pointer-events:none}
+.lookGlint.found{animation:glintPop .9s ease-out forwards}
+@keyframes glintPop{0%{transform:scale(.7)}45%{transform:scale(2.6)}100%{transform:scale(1.4);opacity:.9}}
+.lookRuler{position:absolute;left:50%;bottom:8.4%;transform:translateX(-50%);width:min(320px,50vw);height:1px;
+  background:rgba(255,255,255,.12)}
+.lookRuler i{display:block;height:100%;width:50%;background:rgba(217,179,108,.7)}
+
+/* 推门 */
+.doorShot{transition:opacity 1.1s ease,transform .8s cubic-bezier(.2,.7,.2,1),filter .8s}
+.doorLight{position:absolute;left:38%;top:22%;width:26%;height:58%;opacity:0;pointer-events:none;
+  background:radial-gradient(closest-side,rgba(255,206,138,.85),rgba(255,170,80,.28) 58%,transparent 80%);
+  filter:blur(14px);transform-origin:50% 60%}
+.doorRays{position:absolute;inset:0;opacity:0;pointer-events:none;
+  background:linear-gradient(102deg,transparent 34%,rgba(255,214,150,.20) 46%,transparent 60%)}
+
+/* 插入镜头（焊 / 核心 / 扳机 / 代码） */
+.scInsWrap{position:absolute;inset:0;display:grid;place-items:center}
+.scIns{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.95);
+  width:min(640px,58vw);height:auto;opacity:0;
+  -webkit-mask-image:radial-gradient(closest-side,#000 58%,rgba(0,0,0,.55) 78%,transparent 96%);
+  mask-image:radial-gradient(closest-side,#000 58%,rgba(0,0,0,.55) 78%,transparent 96%);
+  transition:opacity .7s ease}
+.scIns.on{opacity:.35;filter:brightness(1.2) contrast(1.05)}
+.mCodeSc .scIns.on{filter:brightness(1.42) contrast(1.1)}
+.mCodeSc .codeFloat{color:rgba(190,245,255,.96);text-shadow:0 0 22px rgba(90,210,235,.6)}
+.scFxLayer{position:absolute;inset:0;pointer-events:none}
+.weldArc{position:absolute;left:36%;top:56%;width:14%;height:14%;border-radius:50%;opacity:.6;
+  background:radial-gradient(circle,rgba(190,230,255,.95),rgba(120,180,255,.35) 42%,transparent 70%);filter:blur(3px)}
+.weldRipple{position:absolute;left:26%;bottom:16%;width:44%;height:80px;border-radius:50%;
+  border:1px solid rgba(150,210,235,.28);box-shadow:0 0 26px rgba(120,190,230,.18) inset}
+.weldSpark{position:absolute;pointer-events:none;animation:sparkUp .8s ease-out forwards}
+@keyframes sparkUp{0%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-38px) scale(.3);opacity:0}}
+.muzzleFlash{position:absolute;width:190px;height:190px;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,rgba(255,244,210,.95),rgba(255,170,60,.55) 30%,transparent 62%);
+  animation:flashOut .16s ease-out forwards;filter:blur(2px)}
+@keyframes flashOut{0%{opacity:1;transform:scale(.6)}100%{opacity:0;transform:scale(1.5)}}
+.scStage.isShaking{animation:gunShake .08s steps(2) infinite}
+@keyframes gunShake{0%{transform:translate3d(-2px,1px,0)}50%{transform:translate3d(2px,-1px,0)}100%{transform:translate3d(0,0,0)}}
+.sinkCore{width:min(560px,50vw)}
+.sinkRipple{position:absolute;left:50%;bottom:24%;transform:translateX(-50%);width:52vw;height:120px;
+  border-radius:50%;border:1px solid rgba(130,200,240,.22);
+  box-shadow:0 0 40px rgba(90,170,220,.12) inset;pointer-events:none}
+.sinkLines{position:absolute;left:8%;right:8%;top:18%;display:flex;flex-direction:column;gap:10px;
+  pointer-events:none}
+.sinkLines div{font:12px/1.85 var(--mono);letter-spacing:.08em;color:rgba(215,235,235,.72);opacity:0;
+  transform:translateY(8px);transition:opacity .7s,transform .7s;text-shadow:0 2px 14px #000}
+.sinkLines div.on{opacity:1;transform:none}
+.codeFloat{position:absolute;left:50%;top:26%;transform:translateX(-50%);margin:0;text-align:center;
+  font:13px/2 var(--mono);letter-spacing:.1em;color:rgba(150,225,235,.9);white-space:pre-wrap;
+  text-shadow:0 0 16px rgba(90,200,220,.45);pointer-events:none}
+.codeFloat b{font-weight:400;display:block}
+@media (max-width:820px){
+  .scCap{font-size:13.5px;bottom:14%}
+  .scIns{width:78vw}
+  .sinkCore{width:66vw}
+}
+
+/* 地籍检索 · 明确「这一步要做什么」（P12：玩家不知道要干什么） */
+.arcTask{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;
+  margin:0 0 16px;padding:10px 14px;border:1px solid rgba(217,179,108,.22);
+  background:rgba(217,179,108,.06)}
+.arcTask span{font:10px var(--mono);letter-spacing:.24em;color:rgba(217,179,108,.7)}
+.arcTask b{font-size:13px;font-weight:400;letter-spacing:.04em;color:#f0ece3}
+.arcFill{font:10px var(--mono);letter-spacing:.16em;color:rgba(240,236,227,.75);
+  padding:6px 10px;border:1px solid rgba(220,210,190,.24);background:rgba(255,255,255,.03)}
+.arcFill:hover{color:#f4efe4;border-color:var(--accent);background:rgba(217,179,108,.14)}
+
+/* 卡片内滚动条不再露出一条白边 */
+.miniBox::-webkit-scrollbar{width:0;height:0}
+
+/* ============================================================
+   工作台三景 · 磨轴 / 拧螺丝 / 取核心
+   旧版这三个演出只有一个圆形「按住」按钮和一块空舞台，按住也看不出
+   发生了什么（P11 / P13 / P14）。现在按住会在画面上留下痕迹：
+   磨痕一层层退掉、八颗螺丝一颗颗松开、核心被拔出来还留着余温。
+   ============================================================ */
+.wbShot{filter:saturate(.86) brightness(.92)}
+.wbBench{position:absolute;left:50%;top:58%;transform:translate(-50%,-50%);
+  width:min(430px,46vw);height:76px;pointer-events:none;filter:brightness(.92)}
+/* 轴下面压一层影子，别让它像贴在画面上的白色胶囊 */
+.wbBench:after{content:'';position:absolute;left:6%;right:6%;bottom:-26px;height:26px;border-radius:50%;
+  background:radial-gradient(ellipse at 50% 50%,rgba(0,0,0,.72),transparent 70%);filter:blur(4px)}
+.rpShaft{position:absolute;inset:0;border-radius:46% 46% 44% 44%/64%;
+  background:linear-gradient(180deg,#767c82,#41474c 24%,#1e2226 56%,#121517 74%,#343a3e);
+  box-shadow:0 22px 46px rgba(0,0,0,.75),inset 0 2px 0 rgba(255,255,255,.22);transition:box-shadow .6s}
+.rpWear{position:absolute;inset:0;border-radius:inherit;opacity:1;
+  background:repeating-linear-gradient(98deg,rgba(0,0,0,.55) 0 2px,rgba(255,255,255,.10) 2px 3px,transparent 3px 6px);
+  transition:opacity .3s}
+.rpShine{position:absolute;left:2%;right:2%;top:20%;height:24%;border-radius:50%;opacity:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.85),transparent);
+  filter:blur(4px);transition:opacity .25s}
+/* 锉刀：横握在轴上方，一下一下压下去；旧写法是一根竖杆穿过轴心，像根销子 */
+.rpFile{position:absolute;left:2%;top:-36%;width:88%;height:13px;border-radius:4px;transform:rotate(-5deg);
+  background:linear-gradient(180deg,#a3aaaf,#575e64 46%,#23282c);
+  box-shadow:0 8px 20px rgba(0,0,0,.75),inset 0 1px 0 rgba(255,255,255,.45);
+  opacity:0;transition:opacity .22s;transform-origin:50% 100%}
+/* 锉刀的另一头是木柄 */
+.rpFile:after{content:'';position:absolute;right:-9%;top:-3px;width:22%;height:19px;border-radius:5px;
+  background:linear-gradient(180deg,#6b4a2f,#3a2617 60%,#20150d);
+  box-shadow:0 4px 10px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,220,180,.28)}
+.rpFile.on{opacity:.95}
+.rpBench.done .rpShaft{box-shadow:0 0 70px rgba(215,235,255,.4),0 22px 46px rgba(0,0,0,.75),
+  inset 0 2px 0 rgba(255,255,255,.55)}
+.rpBench.done .rpWear{opacity:0!important}
+
+/* 机柜：八颗螺丝 */
+.svScrews{position:absolute;left:63%;top:24%;display:flex;flex-direction:column;gap:9px;pointer-events:none}
+.svScrews i{position:relative;width:10px;height:10px;border-radius:50%;
+  background:radial-gradient(circle at 38% 34%,#9aa1a6,#3a4045 62%,#14181b);
+  box-shadow:inset 0 0 3px rgba(0,0,0,.9);transition:background .35s,box-shadow .35s}
+.svScrews i:after{content:'';position:absolute;left:50%;top:16%;width:1px;height:68%;
+  background:rgba(0,0,0,.85);transform:translateX(-50%) rotate(0deg);transition:transform .35s,background .35s}
+.svScrews i.on{background:radial-gradient(circle at 38% 34%,#e7c48a,#8a6a34 60%,#2a2113);
+  box-shadow:0 0 12px rgba(217,179,108,.55)}
+.svScrews i.on:after{transform:translateX(-50%) rotate(42deg);background:rgba(255,242,205,.85)}
+.svFan{position:absolute;left:calc(63% - 40px);top:24%;width:30px;height:30px;border-radius:50%;
+  border:1px dashed rgba(150,220,200,.35);opacity:0;transition:opacity .5s;pointer-events:none}
+.svFan.on{opacity:1;animation:svSpin 1.1s linear infinite}
+@keyframes svSpin{to{transform:rotate(360deg)}}
+
+/* 核心：被拔出来的那一颗 */
+.coreOrbWrap{position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);
+  width:min(290px,30vw);height:min(290px,30vw);pointer-events:none}
+.coreGhost{position:absolute;inset:0;border-radius:50%;opacity:0;transition:opacity .7s;
+  background:radial-gradient(circle,rgba(150,240,255,.40),rgba(60,180,220,.12) 55%,transparent 72%)}
+.coreOrb{position:absolute;inset:0;border-radius:50%;opacity:.16;
+  background:radial-gradient(circle at 42% 36%,rgba(238,255,255,.96),rgba(110,220,235,.78) 26%,
+    rgba(28,118,158,.6) 52%,rgba(4,10,16,.92) 76%);
+  box-shadow:0 0 80px rgba(90,220,240,.4),inset 0 0 40px rgba(190,255,255,.5)}
+
+/* 火花 / 灰尘 */
+.wbSpark{position:absolute;width:6px;height:6px;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,#fff8e2,rgba(255,180,70,.85) 45%,transparent 70%);
+  animation:wbSparkUp .6s ease-out forwards}
+@keyframes wbSparkUp{0%{opacity:1;transform:translate(0,0) scale(1.1)}
+  100%{opacity:0;transform:translate(var(--dx,0),var(--dy,-30px)) scale(.25)}}
+.wbDust{position:absolute;width:12px;height:12px;border-radius:50%;pointer-events:none;opacity:.5;
+  background:radial-gradient(circle,rgba(215,205,185,.75),transparent 68%);
+  animation:wbDustUp 1.2s ease-out forwards}
+@keyframes wbDustUp{0%{opacity:.55;transform:translateY(0) scale(.7)}
+  100%{opacity:0;transform:translateY(-46px) scale(1.7)}}
+
+/* 点到空白处：把该点的按钮闪一下，别让玩家以为卡住了 */
+.miniTapHint{position:absolute;left:50%;bottom:4.5%;transform:translateX(-50%) translateY(6px);
+  font:10px var(--mono);letter-spacing:.26em;color:rgba(232,227,215,.62);opacity:0;
+  transition:opacity .4s,transform .4s;pointer-events:none;z-index:31;white-space:nowrap}
+.miniTapHint.on{opacity:1;transform:translateX(-50%)}
+.miniBtnPulse{animation:miniBtnPulse .75s ease-out 2}
+@keyframes miniBtnPulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(217,179,108,0)}
+  45%{box-shadow:0 0 0 7px rgba(217,179,108,.16);border-color:var(--accent);color:#f6f1e6}
+}
+
+/* 工作台三景的字幕压在亮地面上会糊：给一层更沉的字幕底 */
+.mRepairSc .scCap:before,.mServerSc .scCap:before,.mCoreSc .scCap:before{
+  background:radial-gradient(ellipse at 50% 50%,rgba(3,5,8,.9),rgba(3,5,8,.6) 46%,transparent 80%)}
+.mRepairSc .scCap em,.mServerSc .scCap em,.mCoreSc .scCap em{color:rgba(226,192,132,.92)}
+
+/* 接入核心的屏幕：给边框和一道扫描光，别让玩家对着一张全黑的纸 */
+.mBroadcast .bcScreen{border-color:rgba(120,200,170,.3);
+  box-shadow:0 0 46px rgba(60,160,120,.10) inset,0 24px 60px rgba(0,0,0,.72)}
+.mBroadcast .bcScreen:before{content:'CORE // 接入核心';position:absolute;left:18px;top:12px;z-index:3;
+  font:10px var(--mono);letter-spacing:.26em;color:rgba(130,220,175,.75)}
+.mBroadcast .bcScreen:after{content:'';position:absolute;left:0;right:0;height:26%;z-index:1;
+  background:linear-gradient(180deg,transparent,rgba(120,220,180,.07),transparent);
+  animation:bcScan 3.8s linear infinite;pointer-events:none}
+@keyframes bcScan{0%{top:-26%}100%{top:100%}}
+
+/* ============================================================
+   拧水龙头 · SC3-FAUCET 四格分镜状态机
+   四格是同一机位的连续镜头，龙头位置略有差异；用 scale + translateY
+   把四格的龙头拉到同一条视线上，切换时才像「拧了一下」而不是「换镜头」。
+   ============================================================ */
+.mFaucetSc .fcFrames{position:absolute;inset:0;overflow:hidden;background:#05070a}
+.fcF{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  opacity:0;transition:opacity .34s ease,transform 1.1s cubic-bezier(.22,.61,.36,1);
+  backface-visibility:hidden}
+.fcF.on{opacity:1}
+/* 每格龙头纵向位置的补偿量 */
+.fcF.fc0{transform:scale(1.05) translateY(-1.6%)}
+.fcF.fc1{transform:scale(1.05) translateY(-2.6%)}
+.fcF.fc2{transform:scale(1.05) translateY(1.4%)}
+.fcF.fc3{transform:scale(1.05) translateY(2.6%)}
+/* 反光：D 格里已经画好了，这里只补一层会呼吸的冷白，让「水停」那一下有回声 */
+.fcGlint{position:absolute;left:57%;top:0;width:9%;height:100%;pointer-events:none;
+  opacity:0;transition:opacity .7s ease;
+  background:linear-gradient(100deg,transparent,rgba(206,236,255,.5) 42%,rgba(255,255,255,.72) 52%,rgba(198,232,255,.42) 62%,transparent);
+  filter:blur(2px)}
+.fcGlint.on{opacity:.9;animation:fcBreath 4.6s ease-in-out infinite}
+@keyframes fcBreath{0%,100%{opacity:.55}50%{opacity:.95}}
+.fcDrops{position:absolute;inset:0;pointer-events:none}
+.mFaucetSc .scCap:before{background:radial-gradient(ellipse at 50% 50%,rgba(3,5,8,.86),rgba(3,5,8,.52) 44%,transparent 80%)}
+
+/* ============================================================
+   推门 · 门缝光 → 暖光桥 → 酒吧
+   Q2-04 里门已经半开、缝里有暖光。所以按住时不是「加一团光」，
+   而是把那条缝本身撑开：光越宽、门越开、镜头越往里走。
+   推到底让光吃掉画面，再由 .warmBridge 把它接手淡出，露出酒吧。
+   ============================================================ */
+.mDoorSc{background:#04060a}
+.doorSlit{position:absolute;top:-8%;height:116%;left:54.5%;width:5%;opacity:0;pointer-events:none;
+  background:linear-gradient(180deg,transparent 2%,rgba(255,236,198,.5) 11%,rgba(255,226,176,.95) 46%,
+    rgba(255,208,144,.62) 82%,transparent 97%);
+  filter:blur(6px)}
+.doorBloom{position:absolute;inset:-12%;opacity:0;pointer-events:none;transform-origin:57% 46%;
+  background:radial-gradient(circle at 57% 46%,rgba(255,208,140,.8),rgba(255,172,82,.36) 25%,
+    rgba(255,140,52,.10) 47%,transparent 66%);
+  filter:blur(18px)}
+.doorBeams{position:absolute;inset:-12%;opacity:0;pointer-events:none;transform-origin:57% 46%;
+  background:repeating-linear-gradient(99deg,transparent 0 3.6%,rgba(255,228,176,.12) 4% 4.9%,transparent 5.3% 9%);
+  filter:blur(4px)}
+.doorDust{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.doorDustP{position:absolute;animation:doorDustFloat 2.4s linear forwards;pointer-events:none}
+@keyframes doorDustFloat{
+  0%{opacity:0;transform:translate(0,0) scale(.55)}
+  20%{opacity:.85}
+  100%{opacity:0;transform:translate(var(--dx,0),-76px) scale(1.2)}
+}
+/* 转场桥：小游戏层退场时它还在，等新场景淡入起来再自己走 */
+.warmBridge{position:fixed;inset:0;z-index:70;pointer-events:none;opacity:0;
+  background:radial-gradient(58% 76% at 57% 46%,#fff8ea,#ffd9a4 24%,#f2a850 52%,#a85a1c 78%,#3f1e06);
+  transition:opacity .55s ease}
+.warmBridge.on{opacity:var(--pk,.9)}
+.warmBridge.out{opacity:0;transition:opacity 1.25s ease}

@@ -1,0 +1,585 @@
+/* ============================================================
+   v2.css — 《一首用心电图写的诗》2.0 电影化视觉
+   ============================================================ */
+@import url('mini.css');
+
+:root{
+  --ink:#eeeae1; --dim:#a09d94; --faint:#6f6e68;
+  --accent:#d9b36c; --ecg:#7fe8a3; --cold:#8fa3a8;
+  --panel:rgba(11,13,16,.94); --panel2:rgba(18,21,25,.96);
+  --line:rgba(220,210,190,.16);
+  --serif:"Noto Serif SC","Songti SC","SimSun",serif;
+  --mono:"Noto Sans Mono","Consolas","Courier New",monospace;
+  --ui:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%;background:#05070a;overflow:hidden}
+body{font-family:var(--serif);color:var(--ink);-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer;border:0;background:none;color:inherit}
+img{display:block}
+.hidden{display:none!important}
+
+/* 性能基线：不使用 isolation / mix-blend-mode / backdrop-filter / will-change。
+   这些属性会让 Chromium 把下方所有层 flatten 到同一纹理再逐帧混合，是 GPU 掉帧主因。 */
+#stage{position:fixed;inset:0;overflow:hidden;background:#04060a}
+#stageShake{position:absolute;inset:0}
+#stageShake.isShake{animation:stageShake .42s cubic-bezier(.36,.07,.19,.97) both}
+#stage.walkShake #stageShake{animation:walkBob 1.05s ease-in-out both}
+@keyframes stageShake{10%,90%{transform:translate3d(-2px,1px,0)}30%,70%{transform:translate3d(4px,-3px,0)}50%{transform:translate3d(-5px,2px,0)}}
+@keyframes walkBob{0%{transform:translateY(0)}25%{transform:translateY(-3px) rotate(-.15deg)}75%{transform:translateY(3px) rotate(.15deg)}100%{transform:translateY(0)}}
+
+/* camWrap 只是普通容器，不再把整棵子树提升成一个巨型合成层 */
+#camWrap{position:absolute;inset:0}
+/* 镜头变换与虚焦只作用于背景层 */
+#bgLayer{position:absolute;inset:0;background:#05070a;transform-origin:50% 50%}
+#bgLayer.defocus{filter:blur(7px) brightness(.9)}
+#bgLayer img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transform:scale(1.02)}
+#bgLayer img.on{opacity:1}
+/* 调色 / 暗角 / 湿光 / 雾合并为单个普通渐变层（由 fx.js 一次写入） */
+#gradeLayer{position:absolute;inset:0;pointer-events:none}
+#pCanvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:5}
+#castLayer{position:absolute;inset:0;z-index:4;pointer-events:none;overflow:hidden}
+/* 颗粒：一次性 192px tile 平铺 + 低频纯 transform，无混合模式、无逐帧像素重建 */
+#grainCanvas{position:absolute;top:-48px;left:-48px;width:calc(100% + 96px);height:calc(100% + 96px);
+  z-index:6;pointer-events:none;opacity:.26}
+#grainCanvas.grainReady{animation:grainShift 1.6s steps(1,end) infinite}
+@keyframes grainShift{0%{transform:translate3d(0,0,0)}25%{transform:translate3d(-23px,14px,0)}
+  50%{transform:translate3d(17px,-19px,0)}75%{transform:translate3d(-11px,-8px,0)}}
+
+/* 立绘：去掉 drop-shadow / mask-image —— 它们会对 1200×1615 透明图逐帧重算像素。
+   只保留静态色彩滤镜，笑/颤抖等动作走纯 transform（GPU 合成）。 */
+.castImg{position:absolute;bottom:-2%;height:82%;width:auto;max-width:52%;
+  object-fit:contain;object-position:bottom;opacity:.97;transform-origin:50% 100%;
+  filter:saturate(.86) brightness(.78);
+  transition:opacity .45s ease,transform .5s cubic-bezier(.2,.7,.2,1);
+  animation:castIn .7s cubic-bezier(.2,.7,.2,1) both}
+.castImg.l{left:9%}
+.castImg.r{right:9%}
+.castImg.mid{left:50%;transform:translateX(-50%);height:70%}
+.castImg.sit{height:72%;bottom:-6%}
+.castImg.speaking{filter:saturate(1.04) brightness(1.06)}
+.castImg:not(.speaking)~.castImg{filter:saturate(.62) brightness(.58)}
+.castImg.emo-smile{animation:castIn .7s both,castSmile 2.4s ease-in-out infinite}
+.castImg.emo-laugh,.castImg.emo-chuckle{animation:castIn .7s both,castLaugh 1.2s ease-in-out infinite}
+.castImg.emo-sharp{filter:saturate(.8) brightness(1.1) contrast(1.15)}
+.castImg.emo-bliss{filter:saturate(1.12) brightness(1.12)}
+.castImg.emo-falter{filter:saturate(.72) brightness(.88);animation:castIn .7s both,castFalter 2s ease-in-out infinite}
+.castImg.emo-quiet{filter:saturate(.6) brightness(.66)}
+@keyframes castIn{from{opacity:0;transform:translateY(26px)}to{opacity:.97;transform:translateY(0)}}
+.castImg.mid{animation:castInMid .7s cubic-bezier(.2,.7,.2,1) both}
+@keyframes castInMid{from{opacity:0;transform:translate(-50%,26px)}to{opacity:.82;transform:translate(-50%,0)}}
+@keyframes castSmile{50%{transform:translateY(-3px) rotate(.5deg)}}
+@keyframes castLaugh{25%{transform:translateY(-5px) rotate(-1deg)}75%{transform:translateY(-2px) rotate(1deg)}}
+@keyframes castFalter{50%{opacity:.72}}
+.castShe{position:absolute;bottom:6%;width:280px;height:180px;opacity:.42;filter:blur(1px)}
+.sheHand{position:absolute;bottom:0;left:30%;font-size:70px;transform:rotate(-24deg);filter:grayscale(1) brightness(.45)}
+#sheHands{position:absolute;left:50%;bottom:13%;width:300px;height:150px;transform:translateX(-50%);
+  z-index:4;opacity:0;pointer-events:none;transition:opacity 1s}
+#stage[data-mode=title] #sheHands{opacity:.5}
+.sheBody{position:absolute;bottom:0;left:20%;width:180px;height:96px;border-radius:50% 50% 0 0;
+  background:linear-gradient(180deg,rgba(30,36,38,.9),rgba(12,15,17,.95));filter:blur(3px)}
+.sheTool{position:absolute;bottom:14px;left:53%;width:80px;height:9px;background:#3b4240;border-radius:3px;transform:rotate(-14deg)}
+.sheWrench{position:absolute;bottom:22px;left:62%;font-size:26px;color:#8a938c;animation:wrenchTurn 3.4s ease-in-out infinite}
+@keyframes wrenchTurn{0%,70%{transform:rotate(0)}80%,100%{transform:rotate(38deg)}}
+
+/* 胶片质感：扫描线与微光合并为单个静态层，无混合模式、无常驻动画 */
+.fx{position:absolute;inset:0;pointer-events:none;z-index:7}
+.fxLines{background:repeating-linear-gradient(0deg,rgba(0,0,0,.10) 0 1px,transparent 1px 3px),rgba(255,255,255,.006);opacity:.6}
+#scope{position:absolute;inset:0;pointer-events:none;z-index:30}
+#scope i{position:absolute;left:0;right:0;height:0;background:#000;transition:height .6s ease}
+#scope i.top{top:0}#scope i.bottom{bottom:0}
+#stage.scopeOn #scope i{height:12.4%}
+
+/* 一次性特效 */
+#flashLayer{position:absolute;inset:0;z-index:22;pointer-events:none}
+.fxOnce{position:absolute;inset:0;pointer-events:none}
+.fxWhite{background:#fff;animation:fw .9s ease-out both}
+.fxWhiteFast{background:#fff;animation:fw .3s ease-out both}
+.fxBlack{background:#000;animation:fb 1.5s ease-in-out both}
+.fxBlackLong{background:#000;animation:fb 2.2s ease-in-out both}
+.fxFlashback{background:linear-gradient(180deg,rgba(255,220,170,.28),transparent);animation:fw .65s ease-out both}
+.fxCut{background:#000;animation:fc .42s steps(2,end) both}
+.fxBurn{background:radial-gradient(circle at 50% 50%,rgba(255,150,60,.5),rgba(120,30,10,.7) 45%,#000 75%);animation:fw 1.4s ease-out both}
+.fxTheme{background:#000;animation:ft 2.4s ease-in-out both}
+@keyframes fw{0%{opacity:0}12%{opacity:.96}100%{opacity:0}}
+@keyframes fb{0%{opacity:0}18%{opacity:1}78%{opacity:1}100%{opacity:0}}
+@keyframes fc{0%{opacity:1}100%{opacity:0}}
+@keyframes ft{0%{opacity:0}20%{opacity:1}80%{opacity:1}100%{opacity:0}}
+/* 冻结 / 慢镜只改背景层滤镜，不再对整棵子树做离屏渲染或 transform 动画 */
+#stage.isFrozen #bgLayer{filter:grayscale(.6) contrast(1.3)}
+#stage.isNoise:after{content:'';position:absolute;inset:0;z-index:23;pointer-events:none;opacity:.22;
+  background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.5) 0 1px,transparent 1px 3px);animation:noiseJump .12s steps(2) infinite}
+@keyframes noiseJump{50%{transform:translateY(3px)}}
+#stage.isSlow #bgLayer{filter:saturate(.6) contrast(1.14)}
+.emblem{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:26px;opacity:0;transition:opacity 1s;background:radial-gradient(circle,rgba(20,8,4,.7),#000 70%)}
+.emblem.on{opacity:1}.emblem.out{opacity:0}
+.emblemRing{width:130px;height:130px;border:2px solid #8c4a32;border-radius:50%;display:grid;place-items:center;
+  box-shadow:0 0 60px rgba(200,80,30,.35),inset 0 0 30px rgba(200,80,30,.25);animation:embPulse 3s ease-in-out infinite}
+.emblemBird{font-size:58px;color:#c86b3c;transform:rotate(-18deg)}
+.emblemTxt{letter-spacing:.5em;font-size:17px;color:#d9b36c;text-align:center}
+.emblemTxt span{display:block;font-size:10px;letter-spacing:.22em;color:#8a7a68;margin-top:12px;font-family:var(--mono)}
+@keyframes embPulse{50%{box-shadow:0 0 90px rgba(220,90,30,.5),inset 0 0 40px rgba(220,90,30,.35)}}
+
+/* 底部心电图：必须浮在主菜单遮罩之上，否则被压成几乎不可见 */
+#ecgBottom{position:absolute;left:0;right:0;bottom:0;height:72px;z-index:30;pointer-events:none;opacity:0;
+  background:linear-gradient(0deg,rgba(2,8,6,.42),transparent);transition:opacity 1s}
+#ecgBottom.on{opacity:1}
+#ecgBottom canvas{width:100%;height:100%;display:block}
+#ecgBottom span{position:absolute;right:24px;bottom:12px;font:10px var(--mono);letter-spacing:.24em;color:rgba(140,230,175,.5)}
+#stage:not([data-mode=title]) #ecgBottom{opacity:.18}
+
+/* HUD */
+#hud{position:absolute;top:0;left:0;right:0;z-index:14;padding:20px 30px;display:flex;justify-content:space-between;
+  align-items:flex-start;pointer-events:none;font-family:var(--ui);opacity:0;transition:opacity .6s}
+#stage[data-mode=story] #hud,#stage[data-mode=mini] #hud{opacity:1}
+.hudLeft{display:flex;flex-direction:column;gap:6px}
+#dayLabel{font-size:12px;letter-spacing:.28em;color:var(--accent);text-shadow:0 2px 10px #000}
+#sceneTag{font-size:11px;letter-spacing:.12em;color:rgba(230,225,215,.52);text-shadow:0 2px 8px #000}
+.hudRight{display:flex;gap:16px;align-items:center;font-size:11px;letter-spacing:.14em;color:rgba(230,225,215,.62);pointer-events:auto}
+.hBtn{padding:4px 2px;cursor:pointer;transition:color .2s;white-space:nowrap}
+.hBtn:hover,.hBtn.on{color:var(--accent)}
+/* HUD 图标：线性菜单 + 声音开关，尺寸与文字行高对齐 */
+.iconBtn{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;padding:0;margin:-2px 0}
+.icoSound{width:19px;height:19px;display:block}
+.icoOff{display:none}
+#soundBtn.isMuted .icoOn{display:none}
+#soundBtn.isMuted .icoOff{display:block}
+#soundBtn.isMuted{color:rgba(230,225,215,.38)}
+#soundBtn.isMuted:hover{color:var(--accent)}
+.hamburger{display:flex;flex-direction:column;justify-content:center;gap:4px;width:17px;height:15px}
+.hamburger i{display:block;height:1.5px;background:currentColor;border-radius:1px;transition:background .2s}
+#menuBtn:hover .hamburger i{background:var(--accent)}
+
+/* 对话框：纯不透明底，取消 backdrop-filter（GPU 上最贵的操作之一） */
+#textbox{position:absolute;left:50%;bottom:5.5%;transform:translateX(-50%) translateY(18px);
+  width:min(1120px,90vw);min-height:150px;padding:30px 40px 34px;z-index:15;
+  background:linear-gradient(180deg,rgba(9,11,14,.965),rgba(7,9,12,.985));
+  border:1px solid var(--line);border-left:2px solid rgba(217,179,108,.55);
+  box-shadow:0 26px 80px rgba(0,0,0,.72),inset 0 1px 0 rgba(255,255,255,.05);
+  opacity:0;pointer-events:none;transition:opacity .4s,transform .4s}
+#textbox.on{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:none}
+/* 说话人半身立绘：叠在对话框左侧，从框顶探出，底部渐隐融进框里 */
+#tbPortrait{position:absolute;left:24px;bottom:0;width:186px;height:218px;z-index:2;
+  pointer-events:none;opacity:0;transform:translateY(16px);transition:opacity .42s,transform .42s;
+  -webkit-mask-image:linear-gradient(180deg,#000 74%,transparent 100%);
+  mask-image:linear-gradient(180deg,#000 74%,transparent 100%)}
+#tbPortrait.on{opacity:1;transform:translateY(0)}
+#tbPortrait:before{content:'';position:absolute;inset:6% -14% 0 -14%;z-index:-1;
+  background:radial-gradient(60% 52% at 50% 58%,rgba(150,175,170,.16),transparent 72%)}
+#tbPortraitImg{width:100%;height:100%;object-fit:contain;object-position:50% 100%;
+  filter:saturate(.94) contrast(1.04)}
+#tbPortraitName{position:absolute;left:0;right:0;bottom:12px;text-align:center;
+  font:10px var(--mono);letter-spacing:.22em;color:rgba(217,179,108,.82);
+  text-shadow:0 2px 10px #000,0 0 18px rgba(0,0,0,.9)}
+#textbox.withPortrait #speaker,#textbox.withPortrait #line{padding-left:196px}
+#speaker{display:flex;align-items:baseline;gap:14px;margin-bottom:14px;min-height:20px}
+#speakerName{font-size:16px;letter-spacing:.24em;color:var(--accent);font-weight:700}
+#speakerHint{font:9px var(--mono);letter-spacing:.26em;color:rgba(190,185,175,.34)}
+#speaker.think #speakerName{color:#9bb8c4}
+#line{font-size:19px;line-height:1.85;letter-spacing:.035em;color:#eeeae1;min-height:2em;
+  text-shadow:0 2px 12px rgba(0,0,0,.7)}
+#line.think{font-style:italic;color:#b9c9cf}
+#line.system{font-family:var(--mono);font-size:14px;color:#94b6a2;letter-spacing:.06em}
+#line.stage{color:#c9c4b8;font-size:17px;letter-spacing:.08em;opacity:.9}
+#line.hand{font-size:22px;color:var(--accent);letter-spacing:.14em}
+#nextMark{position:absolute;right:24px;bottom:16px;font-size:19px;color:var(--accent);opacity:0;transition:opacity .3s}
+#nextMark.on{opacity:.9;animation:bob 1.5s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(5px)}}
+
+/* 章节卡 */
+#chapterScreen{position:absolute;inset:0;z-index:24;display:grid;place-items:center;pointer-events:none;
+  background:radial-gradient(circle at 50% 50%,rgba(4,6,9,.86),rgba(2,3,5,.97));opacity:0;transition:opacity .7s}
+#chapterScreen.on{opacity:1;pointer-events:auto}
+.chFrame{text-align:center;transform:translateY(14px);transition:transform .9s cubic-bezier(.2,.7,.2,1)}
+#chapterScreen.on .chFrame{transform:translateY(0)}
+#chNum{font-size:13px;letter-spacing:.8em;color:var(--accent);margin-bottom:26px}
+.chRule{width:70px;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);margin:0 auto 28px}
+#chTitle{font-size:44px;letter-spacing:.24em;font-weight:700;color:#f2eee6;text-shadow:0 8px 40px rgba(0,0,0,.8)}
+#chDay{margin-top:20px;font:12px var(--mono);letter-spacing:.3em;color:rgba(217,179,108,.72)}
+#chSub{margin-top:12px;font-size:13px;letter-spacing:.16em;color:rgba(220,215,205,.45)}
+.chHint{margin-top:48px;font:10px var(--mono);letter-spacing:.3em;color:rgba(220,215,205,.25)}
+
+/* CG 特写 */
+#cgScreen{position:absolute;inset:0;z-index:20;display:grid;place-items:center;opacity:0;pointer-events:none;
+  transition:opacity .6s;background:rgba(2,3,5,.94)}
+#cgScreen.on{opacity:1;pointer-events:auto}
+.cgFrame{position:relative;width:min(1180px,90vw);height:min(664px,76vh);overflow:hidden;border:1px solid var(--line);
+  box-shadow:0 40px 120px rgba(0,0,0,.85);background:#05070a}
+.cgFrame img#cgImg{width:100%;height:100%;object-fit:cover;filter:saturate(1.05) contrast(1.06);
+  animation:cgZoom 12s ease-out both;
+  /* 新图解码完才加 .ready：否则改 src 的瞬间会先沿用上一张 CG 的位图，
+     在 600ms 淡入里闪出一帧别的场景 */
+  opacity:0;transition:opacity .42s ease}
+.cgFrame img#cgImg.ready{opacity:1}
+@keyframes cgZoom{from{transform:scale(1.16)}to{transform:scale(1.02)}}
+.cgFrame.focus-eyes #cgImg{transform-origin:62% 38%;animation:cgZoomEyes 9s ease-out both}
+.cgFrame.focus-face #cgImg{transform-origin:52% 34%;animation:cgZoomEyes 9s ease-out both}
+.cgFrame.focus-crack #cgImg{transform-origin:50% 22%}
+.cgFrame.focus-flowers #cgImg{transform-origin:45% 66%}
+.cgFrame.focus-hands #cgImg{transform-origin:48% 72%}
+@keyframes cgZoomEyes{from{transform:scale(1.9)}to{transform:scale(1.14)}}
+#cgPortrait{position:absolute;right:5%;bottom:-4%;height:88%;width:auto;opacity:.96;display:none}
+.cgShade{position:absolute;inset:0;background:linear-gradient(180deg,transparent 42%,rgba(0,0,0,.8) 100%)}
+.cgMeta{position:absolute;left:0;right:0;bottom:0;padding:34px 40px 26px;text-align:center}
+#cgCap{font-size:12px;letter-spacing:.3em;color:var(--accent);margin-bottom:10px}
+#cgNote{font-size:14px;line-height:1.8;color:rgba(235,230,220,.78);max-width:760px;margin:0 auto}
+#cgClose{position:absolute;right:22px;top:20px}
+
+/* 心电诗集 / 雪花字 */
+#poemFloat{position:absolute;right:36px;bottom:40px;z-index:18;text-align:right;opacity:0;
+  transform:translateY(12px);transition:opacity .6s,transform .6s;pointer-events:none}
+#poemFloat.on{opacity:1;transform:translateY(0)}
+#poemTag{font:10px var(--mono);letter-spacing:.28em;color:rgba(217,179,108,.6);margin-bottom:10px}
+#poemLines div{font-size:16px;line-height:1.9;letter-spacing:.1em;color:#e8e2d4;text-shadow:0 3px 18px #000}
+#snowLine{position:absolute;right:40px;bottom:130px;z-index:19;opacity:0;pointer-events:none;
+  font:11px var(--mono);color:#fff;letter-spacing:.08em;text-shadow:0 0 4px rgba(255,255,255,.8)}
+#snowLine.on{opacity:.85;animation:snowFlick .42s steps(3,end) both}
+@keyframes snowFlick{0%{opacity:0}20%{opacity:.9}45%{opacity:.15}70%{opacity:.8}100%{opacity:0}}
+
+/* 选择 */
+#choiceBox{position:absolute;inset:0;z-index:21;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:14px;background:radial-gradient(circle at 50% 50%,rgba(3,5,8,.92),rgba(2,3,5,.98));
+  opacity:0;pointer-events:none;transition:opacity .5s}
+#choiceBox.on{opacity:1;pointer-events:auto}
+#choicePrompt{font-size:15px;letter-spacing:.3em;color:var(--accent);margin-bottom:4px}
+#choiceSub{font-size:13px;color:rgba(220,215,205,.5);letter-spacing:.1em;margin-bottom:26px;text-align:center;max-width:700px;line-height:1.8}
+#choiceList{display:flex;flex-direction:column;gap:12px;width:min(760px,86vw)}
+.choiceBtn{display:flex;align-items:center;gap:20px;padding:18px 24px;text-align:left;
+  background:rgba(18,21,25,.8);border:1px solid var(--line);transition:all .28s cubic-bezier(.2,.7,.2,1)}
+.choiceBtn:hover{background:rgba(36,32,26,.92);border-color:rgba(217,179,108,.6);transform:translateX(9px)}
+.chNum{font:13px var(--mono);color:var(--accent);width:26px;flex-shrink:0}
+.chBody{flex:1;display:flex;flex-direction:column;gap:6px}
+.chBody b{font-size:17px;font-weight:400;letter-spacing:.06em;color:#eeeae1}
+.chBody i{font-size:11px;font-style:normal;color:rgba(215,210,200,.45);letter-spacing:.08em}
+.chArrow{color:var(--accent);opacity:.5;font-size:16px}
+.choiceBtn.critical{border-color:rgba(217,179,108,.3)}
+.choiceBtn.hand{border-style:dashed;background:rgba(30,26,20,.7)}
+.choiceBtn.hand .chNum{font-size:20px}
+.choiceBtn.hand .chBody b{font-family:var(--serif);font-style:italic;color:#e8d4a8}
+
+/* 日志层（第二周目） */
+#logScreen{position:absolute;inset:0;z-index:20;display:grid;place-items:center;opacity:0;pointer-events:none;
+  background:rgba(2,3,4,.96);transition:opacity .5s}
+#logScreen.on{opacity:1;pointer-events:auto}
+.logFrame{width:min(940px,90vw);max-height:82vh;display:flex;flex-direction:column;
+  border:1px solid rgba(120,150,130,.2);background:#070908;font-family:var(--mono)}
+.logTop{display:flex;justify-content:space-between;padding:16px 26px;border-bottom:1px solid rgba(120,150,130,.18);
+  font-size:11px;letter-spacing:.24em;color:rgba(150,200,165,.62)}
+#logBody{overflow:auto;padding:28px 34px;flex:1;scrollbar-width:thin;scrollbar-color:#2c3a30 transparent}
+.logMeta{display:flex;gap:20px;align-items:baseline;margin-bottom:26px;padding-bottom:14px;border-bottom:1px dashed rgba(120,150,130,.2)}
+.logMeta span{font-size:10px;letter-spacing:.2em;color:rgba(140,180,152,.5)}
+.logMeta b{font-size:20px;font-weight:400;letter-spacing:.2em;color:#c8d8c8}
+.logRow{font-size:14px;line-height:2.1;color:#c2ccc2;letter-spacing:.02em;padding-left:2px}
+.logNotes{margin-top:26px;padding-top:18px;border-top:1px solid rgba(120,150,130,.16)}
+.logNote{font-size:13px;line-height:2;color:#8ea392;letter-spacing:.02em}
+.logFoot{display:flex;justify-content:flex-end;gap:12px;padding:16px 26px;border-top:1px solid rgba(120,150,130,.18)}
+.rewindView{position:absolute;inset:0;background:rgba(0,0,0,.95);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:22px;z-index:3;padding:40px}
+.rwSnow{font:24px var(--mono);color:#fff;letter-spacing:.1em;text-shadow:0 0 12px rgba(255,255,255,.5);text-align:center;line-height:1.9}
+.rwUnlock{font:13px var(--mono);color:rgba(140,230,175,.85);letter-spacing:.1em}
+.rwAt{font:11px var(--mono);color:rgba(200,200,200,.4);letter-spacing:.2em}
+
+/* 作者手记 */
+#noteScreen{position:absolute;inset:0;z-index:20;display:grid;place-items:center;opacity:0;pointer-events:none;
+  background:rgba(6,7,9,.94);transition:opacity .5s}
+#noteScreen.on{opacity:1;pointer-events:auto}
+.noteFrame{position:relative;width:min(720px,88vw);height:min(620px,80vh);padding:52px 60px;overflow:auto;
+  background:linear-gradient(150deg,#16191a,#0d1011);border:1px solid rgba(200,190,165,.18);
+  box-shadow:0 40px 120px rgba(0,0,0,.8)}
+.notePage{display:none;font-size:16px;line-height:2.2;color:#d8d2c4;letter-spacing:.05em}
+.notePage.on{display:block;animation:noteIn .6s ease both}
+@keyframes noteIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.notePage h3{font-size:20px;letter-spacing:.2em;color:var(--accent);margin:0 0 30px;font-weight:400}
+.noteNav{position:absolute;left:60px;bottom:26px;display:flex;gap:10px}
+.noteNav button{width:28px;height:28px;border:1px solid var(--line);font:11px var(--mono);color:var(--dim)}
+.noteNav button.on{border-color:var(--accent);color:var(--accent)}
+#noteClose{position:absolute;right:26px;bottom:22px}
+
+/* 结局 */
+#endingScreen{position:absolute;inset:0;z-index:23;display:grid;place-items:center;opacity:0;pointer-events:none;
+  background:radial-gradient(circle at 50% 40%,rgba(8,10,13,.94),#020304 80%);transition:opacity .9s}
+#endingScreen.on{opacity:1;pointer-events:auto}
+.endFrame{width:min(760px,88vw);text-align:center;padding:40px}
+.endKicker{font:10px var(--mono);letter-spacing:.6em;color:rgba(217,179,108,.6);margin-bottom:26px}
+#endTitle{font-size:38px;letter-spacing:.3em;color:#f0ebe0;text-shadow:0 8px 40px #000}
+.endRule{width:100px;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);margin:32px auto}
+#endPoem{font-size:16px;line-height:2.3;letter-spacing:.08em;color:#c9c3b5;text-align:justify}
+#endClose{margin-top:38px}
+
+/* 收尾 */
+#finishScreen{position:absolute;inset:0;z-index:26;display:grid;place-items:center;opacity:0;pointer-events:none;
+  background:radial-gradient(circle,#080a0d,#020304);transition:opacity 1.1s}
+#finishScreen.on{opacity:1;pointer-events:auto}
+.finFrame{width:min(880px,90vw);text-align:center;max-height:88vh;overflow:auto;padding:30px}
+.finTheme{font-size:25px;letter-spacing:.24em;color:#f0eadd;margin-bottom:38px;line-height:1.9;
+  text-shadow:0 0 40px rgba(217,179,108,.3)}
+.finStat{font:12px var(--mono);color:rgba(200,200,190,.5);letter-spacing:.1em;margin:8px 0}
+.finStat b{color:var(--accent)}
+.finHint{margin:34px 0 26px;font-size:16px;letter-spacing:.2em;color:#b9b3a5}
+#finishActions{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:20px}
+
+/* 通用面板 */
+.panel{position:absolute;inset:6% 8%;z-index:28;display:flex;flex-direction:column;opacity:0;pointer-events:none;
+  background:var(--panel);border:1px solid var(--line);box-shadow:0 40px 140px rgba(0,0,0,.9);
+  transform:translateY(14px);transition:opacity .4s,transform .4s}
+.panel.small{inset:16% 32%}
+.panel.on{opacity:1;pointer-events:auto;transform:none}
+.panelHead{display:flex;align-items:baseline;gap:20px;padding:22px 30px;border-bottom:1px solid var(--line);flex-shrink:0}
+.panelHead b{font-size:19px;letter-spacing:.3em;color:var(--accent);font-weight:400}
+.panelHead span{font-size:11px;letter-spacing:.16em;color:var(--faint);font-family:var(--ui)}
+.xBtn{margin-left:auto;font-size:16px;color:var(--dim);padding:6px 10px}
+.xBtn:hover{color:var(--accent)}
+.panelBody{flex:1;overflow:auto;padding:24px 30px;scrollbar-width:thin;scrollbar-color:#3a3a34 transparent}
+.panelFoot{padding:16px 30px;border-top:1px solid var(--line);text-align:right;flex-shrink:0}
+.uiBtn{display:flex;flex-direction:column;gap:5px;text-align:left;padding:13px 18px;
+  border:1px solid var(--line);background:rgba(255,255,255,.015);transition:all .25s}
+.uiBtn:hover{border-color:rgba(217,179,108,.55);background:rgba(217,179,108,.08);transform:translateY(-2px)}
+.uiBtn.primary{border-color:rgba(217,179,108,.45);background:rgba(217,179,108,.08)}
+.uiBtn b{font-size:14px;font-weight:400;letter-spacing:.16em;color:#eeeae1}
+.uiBtn i{font-size:10px;font-style:normal;letter-spacing:.08em;color:var(--faint);font-family:var(--ui)}
+.ghostBtn{padding:10px 22px;border:1px solid rgba(217,179,108,.4);color:var(--accent);font-size:12px;
+  letter-spacing:.2em;background:rgba(10,12,14,.6);transition:all .25s}
+.ghostBtn:hover{background:rgba(217,179,108,.16);border-color:var(--accent)}
+.ghostBtn.primary{background:rgba(217,179,108,.18)}
+.ghostBtn.small{padding:7px 14px;font-size:10px}
+.ghostBtn span{font:9px var(--mono);opacity:.5;margin-left:6px}
+
+/* 章节列表 */
+.chGroup{grid-column:1/-1;font:10px var(--mono);letter-spacing:.3em;color:rgba(217,179,108,.55);
+  margin:20px 0 8px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+#chapterList{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:10px;align-content:start}
+.chItem{display:grid;grid-template-columns:76px 1fr;text-align:left;padding:14px 16px;
+  border:1px solid var(--line);transition:all .25s;background:rgba(255,255,255,.012)}
+.chItem:hover{border-color:rgba(217,179,108,.6);background:rgba(217,179,108,.07);transform:translateY(-2px)}
+.chLab{font:10px var(--mono);letter-spacing:.14em;color:var(--accent);grid-row:1/3;padding-top:4px}
+.chTit{font-size:15px;letter-spacing:.1em;color:#eeeae1}
+.chDay{font:10px var(--mono);color:var(--faint);margin-top:5px}
+/* 未通关的那一周目：章节留着位置，但不给跳 */
+.chItem.locked{opacity:.46;cursor:not-allowed;border-style:dashed}
+.chItem.locked:hover{transform:none;border-color:var(--line);background:rgba(255,255,255,.012)}
+.chItem.locked .chTit{color:#c6c1b7}
+.chItem.locked .chDay{color:rgba(217,179,108,.8)}
+.chLockNote{grid-column:1/-1;margin-top:8px;font:11px var(--mono);letter-spacing:.14em;color:rgba(217,179,108,.62)}
+
+/* 环境档案 */
+#archiveFilters{display:flex;gap:7px;flex-wrap:wrap;padding:14px 30px;border-bottom:1px solid var(--line);flex-shrink:0;max-height:96px;overflow:auto}
+.filterBtn{padding:6px 12px;font-size:10px;letter-spacing:.1em;color:var(--dim);border:1px solid var(--line);font-family:var(--ui)}
+.filterBtn.on,.filterBtn:hover{border-color:var(--accent);color:var(--accent)}
+#archiveGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;align-content:start}
+.arcThumb{position:relative;padding:0;border:1px solid var(--line);overflow:hidden;text-align:left;transition:all .25s;background:#0a0c0e}
+.arcThumb:hover{border-color:var(--accent);transform:translateY(-3px);box-shadow:0 14px 34px rgba(0,0,0,.6)}
+.arcThumb img{width:100%;aspect-ratio:16/9;object-fit:cover;filter:saturate(.85);transition:filter .3s,transform .5s}
+.arcThumb:hover img{filter:saturate(1.1);transform:scale(1.05)}
+.arcThumb span{position:absolute;top:6px;left:8px;font:10px var(--mono);color:#fff;
+  background:rgba(0,0,0,.62);padding:3px 6px;letter-spacing:.1em}
+.arcThumb i{display:block;font-size:11px;font-style:normal;color:var(--dim);padding:9px 10px;line-height:1.5;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#archiveDetail{position:absolute;inset:0;background:rgba(5,7,9,.98);display:flex;flex-direction:column;
+  opacity:0;pointer-events:none;transition:opacity .4s;z-index:3}
+#archiveDetail.on{opacity:1;pointer-events:auto}
+.arcDetailClose{position:absolute;right:18px;top:16px;z-index:5;width:38px;height:38px;padding:0;margin:0;
+  display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1;
+  color:rgba(230,225,215,.72);background:rgba(5,7,9,.62);border:1px solid rgba(230,225,215,.22);
+  transition:color .2s,border-color .2s,background .2s,transform .15s}
+.arcDetailClose:hover{color:var(--accent);border-color:rgba(217,179,108,.8);background:rgba(217,179,108,.1)}
+.arcDetailClose:active{transform:scale(.94)}
+#arcDetailImg{width:100%;flex:1;object-fit:contain;background:#000}
+.arcInfo{padding:18px 30px 22px;border-top:1px solid var(--line)}
+#arcDetailCode{font:10px var(--mono);letter-spacing:.2em;color:var(--accent)}
+.arcInfo h3{font-size:20px;letter-spacing:.14em;margin:8px 0;font-weight:400}
+#arcDetailMeta{font:11px var(--mono);color:var(--faint);letter-spacing:.06em;margin-bottom:16px}
+.arcInfo .ghostBtn{margin-right:10px}
+
+/* 设置 */
+.setRow{display:flex;align-items:center;justify-content:space-between;padding:16px 4px;border-bottom:1px solid var(--line)}
+.setRow>span{font-size:14px;letter-spacing:.14em;color:#ded9cd}
+.setCtl{display:flex;align-items:center;gap:8px}
+.switch{min-width:52px;padding:6px 12px;border:1px solid var(--line);font-size:11px;letter-spacing:.14em;color:var(--dim)}
+.switch.on{border-color:var(--accent);color:var(--accent);background:rgba(217,179,108,.1)}
+.seg{display:flex;gap:4px}
+.seg button{padding:6px 12px;border:1px solid var(--line);font-size:11px;color:var(--dim)}
+.seg button.on{border-color:var(--accent);color:var(--accent);background:rgba(217,179,108,.1)}
+.setCtl input[type=range]{width:150px;accent-color:var(--accent)}
+
+/* 结局诗集 */
+.poemH{font-size:13px;letter-spacing:.3em;color:var(--accent);font-weight:400;margin:0 0 18px}
+.poemGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-bottom:34px}
+.poemCard{padding:16px 18px;border:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.poemCard b{font-size:11px;letter-spacing:.2em;color:var(--accent);font-weight:400}
+.poemCard span{font-size:13px;line-height:1.8;color:#d8d2c4}
+.poemCard.locked{opacity:.3}.poemCard .unread{font:11px var(--mono);color:var(--faint)}
+.poemEnds{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.poemEnd{padding:20px;border:1px solid var(--line)}
+.poemEnd b{font-size:14px;letter-spacing:.18em;color:var(--accent);font-weight:400}
+.poemEnd p{font-size:13px;line-height:2;color:#ccc6b8;margin:14px 0 0;text-align:justify}
+.poemEnd.locked{opacity:.32}
+
+/* 存档 */
+#saveSlots{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-content:start}
+/* SC-67 存档 · 心电图纸：作为面板底纹，让每一份存档落在真的纸上 */
+#saveScreen .savePaper{position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:url('../assets/sc/SC-67.jpg') center/cover no-repeat;opacity:.16}
+#saveScreen > *:not(.savePaper){position:relative;z-index:1}
+.saveSlot{padding:20px;border:1px solid var(--line);background:rgba(255,255,255,.012)}
+.saveSlot.empty{opacity:.5}
+.saveWave{height:44px;color:var(--accent);opacity:.85}
+.saveWave svg{width:100%;height:100%}
+.saveMeta{display:flex;flex-direction:column;gap:6px;margin:16px 0}
+.saveMeta b{font-size:14px;letter-spacing:.16em;font-weight:400;color:#eeeae1}
+.saveMeta span{font-size:11px;color:var(--dim)}
+.saveMeta em{font:10px var(--mono);font-style:normal;color:var(--faint)}
+.saveBtns{display:flex;gap:8px}
+.saveBtns button{flex:1;padding:8px;border:1px solid var(--line);font-size:11px;letter-spacing:.14em;color:var(--dim)}
+.saveBtns button:hover{border-color:var(--accent);color:var(--accent)}
+
+/* 主菜单 */
+#titleScreen{position:absolute;inset:0;z-index:27;opacity:0;pointer-events:none;transition:opacity .45s;
+  display:flex;flex-direction:column;justify-content:space-between;padding:8vh 9vw 8vh}
+#titleScreen.on{opacity:1;pointer-events:auto;transition:opacity 1s}
+.titleShade{position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(90deg,rgba(2,4,6,.94) 0%,rgba(3,5,7,.76) 42%,rgba(3,5,7,.12) 100%),
+             linear-gradient(180deg,rgba(2,4,6,.5),transparent 40%,rgba(2,4,6,.86))}
+.titleHead{position:relative;max-width:720px}
+.titleKicker{font:10px var(--mono);letter-spacing:.44em;color:rgba(217,179,108,.7);margin-bottom:28px}
+.titleHead h1{font-size:clamp(30px,3.8vw,56px);letter-spacing:.14em;margin:0;font-weight:700;
+  color:#f6f1e6;text-shadow:0 10px 50px rgba(0,0,0,.9);line-height:1.24;white-space:nowrap}
+.titleSub{margin-top:22px;font-size:14px;line-height:1.9;letter-spacing:.06em;color:rgba(232,227,215,.8)}
+.titleQuote{margin-top:24px;font-size:15px;letter-spacing:.14em;color:var(--accent);font-style:italic}
+/* 三个主行动 + 一行次要导航，取代原先八连按钮的密集列表 */
+#titleMenu{position:relative;display:flex;flex-direction:column;gap:12px;width:min(460px,44vw);
+  margin-top:34px;max-height:60vh;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(217,179,108,.35) transparent}
+#titleMenu .uiBtn{padding:15px 20px;background:rgba(8,10,12,.58);border-color:rgba(220,210,190,.2)}
+#titleMenu .uiBtn:hover{background:rgba(217,179,108,.14);transform:translateX(8px)}
+#titleMenu .uiBtn b{font-size:15px;letter-spacing:.24em;color:#f4efe4}
+#titleMenu .uiBtn i{font-size:11px;letter-spacing:.06em;color:rgba(220,215,203,.66)}
+.titleLinks{display:flex;flex-wrap:wrap;align-items:center;gap:12px 24px;
+  margin-top:20px;padding-top:18px;border-top:1px solid rgba(220,210,190,.14)}
+.titleLink{background:none;border:0;padding:3px 0;font:11px var(--ui);letter-spacing:.16em;
+  color:rgba(220,215,203,.6);cursor:pointer;transition:color .2s}
+.titleLink:hover{color:var(--accent)}
+.titleFoot{position:relative;display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap}
+#titleProgress{font:11px var(--mono);color:rgba(222,217,207,.62);letter-spacing:.1em}
+#titleProgress b{color:var(--accent)}
+.titleKeys{font:10px var(--ui);color:rgba(212,207,197,.46);letter-spacing:.06em;text-align:right}
+
+#toast{position:absolute;left:50%;top:9%;transform:translate(-50%,-12px);z-index:40;opacity:0;
+  padding:10px 22px;background:rgba(8,10,12,.92);border:1px solid var(--line);font-size:12px;
+  letter-spacing:.14em;color:var(--accent);pointer-events:none;transition:opacity .3s,transform .3s}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+#quickHint{display:none}
+
+/* ============ 暂停菜单：暗色 + 心电图 ============ */
+#pauseScreen{inset:0;align-items:center;justify-content:center;overflow-y:auto;
+  background:radial-gradient(120% 95% at 50% 44%,rgba(6,10,12,.84),rgba(2,3,4,.93));
+  border:0;box-shadow:none;transform:none;padding:5vh 24px}
+#pauseScreen.on{transform:none}
+#pauseScreen .panelHead{position:relative;display:block;width:min(560px,88vw);text-align:center;
+  padding:0 0 22px;border-bottom:0;flex-shrink:0}
+#pauseScreen .panelHead b{display:block;font-size:22px;line-height:1.2;letter-spacing:.5em;color:var(--accent);text-shadow:0 0 26px rgba(217,179,108,.24)}
+#pauseScreen .panelHead span{display:block;margin-top:11px;font-size:10px;letter-spacing:.44em;color:rgba(214,208,196,.42);font-family:var(--ui)}
+#pauseScreen .panelHead:after{content:'';display:block;width:76px;height:1px;margin:20px auto 0;
+  background:linear-gradient(90deg,transparent,rgba(217,179,108,.7),transparent)}
+/* 关闭按钮：细描边圆环 + 手绘 ✕，不用系统按钮长相 */
+#pauseScreen .xBtn{position:absolute;right:0;top:0;margin:0;width:38px;height:38px;padding:0;
+  font-size:0;color:transparent;border:1px solid rgba(217,179,108,.32);border-radius:50%;
+  background:rgba(8,10,12,.55);transition:border-color .28s,background .28s,box-shadow .28s,transform .16s}
+#pauseScreen .xBtn::before,#pauseScreen .xBtn::after{content:'';position:absolute;left:50%;top:50%;
+  width:13px;height:1px;background:rgba(226,214,190,.78);transition:background .28s,transform .32s}
+#pauseScreen .xBtn::before{transform:translate(-50%,-50%) rotate(45deg)}
+#pauseScreen .xBtn::after{transform:translate(-50%,-50%) rotate(-45deg)}
+#pauseScreen .xBtn:hover{border-color:rgba(217,179,108,.95);background:rgba(217,179,108,.1);
+  box-shadow:0 0 22px rgba(217,179,108,.25),inset 0 0 14px rgba(217,179,108,.1)}
+#pauseScreen .xBtn:hover::before,#pauseScreen .xBtn:hover::after{background:#f6ead2}
+#pauseScreen .xBtn:active{transform:scale(.94)}
+/* 监护仪网格：只在暂停时出现，给暗底一点纹理 */
+#pauseScreen::before{content:'';position:absolute;inset:0;pointer-events:none;opacity:.5;
+  background-image:linear-gradient(rgba(120,200,160,.045) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(120,200,160,.045) 1px,transparent 1px);
+  background-size:46px 46px;
+  -webkit-mask-image:radial-gradient(62% 58% at 50% 46%,#000,transparent 80%);
+  mask-image:radial-gradient(62% 58% at 50% 46%,#000,transparent 80%)}
+#pauseScreen .panelHead,#pauseScreen .panelBody{position:relative;z-index:1}
+/* 选项：只留主标题，居中；一整条都是热区 */
+#pauseScreen .panelBody{flex:0 0 auto;width:min(560px,88vw);padding:0;overflow:visible;
+  display:flex;flex-direction:column;gap:9px}
+#pauseScreen .pauseItem{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;
+  width:100%;min-height:54px;padding:0 20px;
+  border:1px solid rgba(198,182,152,.16);
+  background:linear-gradient(180deg,rgba(17,20,23,.7),rgba(8,10,12,.82));
+  color:#e4ddd0;font-size:14px;letter-spacing:.46em;
+  transition:border-color .26s,background .26s,color .26s,box-shadow .26s,transform .16s}
+#pauseScreen .pauseItem::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;
+  background:rgba(217,179,108,0);transition:background .26s;z-index:2}
+#pauseScreen .pauseItem:hover{border-color:rgba(217,179,108,.68);color:#fff9ec;
+  background:linear-gradient(180deg,rgba(50,41,25,.86),rgba(22,18,12,.9));
+  box-shadow:0 6px 26px rgba(0,0,0,.55),inset 0 0 30px rgba(217,179,108,.08)}
+#pauseScreen .pauseItem:hover::before{background:rgba(217,179,108,.85)}
+#pauseScreen .pauseItem:active{transform:scale(.994);background:rgba(217,179,108,.16);border-color:rgba(217,179,108,.8)}
+#pauseScreen .pauseItem.primary{border-color:rgba(217,179,108,.34);
+  background:linear-gradient(180deg,rgba(28,24,17,.72),rgba(12,10,8,.84))}
+#pauseScreen .piTxt{position:relative;z-index:3}
+#pauseScreen .piNo{position:absolute;left:18px;top:50%;transform:translateY(-50%);z-index:3;
+  font-size:9px;letter-spacing:.14em;color:rgba(217,179,108,.26);font-family:var(--mono);
+  transition:color .26s}
+#pauseScreen .pauseItem:hover .piNo{color:rgba(217,179,108,.72)}
+/* 悬停 = 指针真正落在该按钮的矩形内；空隙不命中，离开立刻收起。
+   一个周期 1.9s：0–50% 画完整条，50–84% 停留，84–94.7% 淡出，
+   剩下的 5.3%（≈100ms）完全不可见 —— 这就是两轮之间固定的间隔。 */
+#pauseScreen .piEcg{position:absolute;inset:0;width:100%;height:100%;opacity:0;pointer-events:none;z-index:1}
+#pauseScreen .piEcg path{fill:none;stroke:rgba(140,238,175,.95);stroke-width:1.25;
+  stroke-dasharray:100;stroke-dashoffset:100;
+  filter:drop-shadow(0 0 5px rgba(110,230,160,.55))}
+#pauseScreen .pauseItem:hover .piEcg{opacity:1}
+#pauseScreen .pauseItem:hover .piEcg path{animation:piEcgSweep 1.9s cubic-bezier(.3,.05,.25,1) infinite}
+@keyframes piEcgSweep{
+  0%{stroke-dashoffset:100;opacity:0}
+  7%{opacity:1}
+  50%{stroke-dashoffset:0;opacity:1}
+  84%{opacity:1}
+  94.7%{opacity:0}
+  100%{opacity:0}}
+/* 暂停时把 HUD 收掉：否则右上角的声音/菜单文字会从关闭按钮后面透出来 */
+#stage.paused #hud{opacity:0;pointer-events:none}
+/* 矮屏：压缩条目高度，保证整列仍然居中放得下 */
+@media(max-height:740px){
+  #pauseScreen .pauseItem{min-height:46px}
+  #pauseScreen .panelHead{padding-bottom:16px}
+}
+@media(max-height:620px){
+  #pauseScreen{justify-content:flex-start;padding-top:4vh}
+  #pauseScreen .pauseItem{min-height:41px}
+}
+
+@media(max-width:820px){
+  #titleMenu{width:100%;max-height:52vh;margin-top:22px;gap:9px}#titleScreen{padding:5vh 6vw 8vh}
+  .titleHead h1{white-space:normal;font-size:clamp(26px,6vw,38px)}
+  .titleKicker{margin-bottom:16px}.titleSub{margin-top:14px}.titleQuote{margin-top:14px}
+  .titleLinks{gap:10px 16px;margin-top:14px;padding-top:14px}
+  #titleMenu .uiBtn{padding:11px 15px}
+  .titleShade{background:linear-gradient(180deg,rgba(2,4,6,.9),rgba(2,4,6,.75))}
+  .panel{inset:3% 3%}.panel.small{inset:10% 6%}
+  #pauseScreen{inset:0;padding:4vh 18px}
+  #pauseScreen .panelHead b{font-size:19px;letter-spacing:.4em}
+  #pauseScreen .panelHead span{letter-spacing:.3em}
+  #pauseScreen .pauseItem{min-height:47px;font-size:13px;letter-spacing:.3em}
+  #pauseScreen .panelBody{width:min(560px,92vw)}
+  #textbox{width:94vw;padding:20px 22px 26px;bottom:3%}
+  #tbPortrait{width:104px;height:134px;left:10px}
+  #tbPortraitName{font-size:8px;bottom:8px}
+  #textbox.withPortrait #speaker,#textbox.withPortrait #line{padding-left:104px}
+  #line{font-size:16px}
+  #finishActions{grid-template-columns:repeat(2,1fr)}
+  .hudRight{gap:9px;font-size:9px}
+  .iconBtn{width:20px;height:20px}
+  .icoSound{width:17px;height:17px}
+  .hamburger{width:15px;gap:3px}
+  #hud{padding:12px 14px}
+}
+
+/* ---------- 通用确认框 ---------- */
+#confirmBody{padding:20px 2px;font-size:14px;line-height:1.95;letter-spacing:.05em;color:rgba(235,230,220,.82)}
+#confirmBody b{color:var(--accent);font-weight:400}
+#confirmScreen .panelFoot .ghostBtn{min-width:104px;margin-left:10px}
+.savePath{font-family:var(--ui);font-size:11px;letter-spacing:0;color:rgba(214,208,196,.62);
+  max-width:min(420px,46vw);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:middle}
